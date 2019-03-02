@@ -18,7 +18,9 @@ import java.util.Map;
 @ConfigurationProperties
 public class BotConfiguration {
 
-    public Boolean debug;
+    private Boolean debug;
+
+    private Boolean voice;
 
     private Map<String, String> bot;
 

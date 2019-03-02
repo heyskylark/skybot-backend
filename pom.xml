@@ -6,6 +6,7 @@
 	<modules>
 		<module>skybot-irc</module>
         <module>skybot-launcher</module>
+        <module>skybot-voice</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>

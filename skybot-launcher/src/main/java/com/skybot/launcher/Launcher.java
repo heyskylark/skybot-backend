@@ -9,7 +9,8 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 @Slf4j
 @SpringBootApplication(
         scanBasePackages={
-                "com.skybot.irc"
+                "com.skybot.irc",
+                "com.skybot.voice"
         }
 )
 @EnableAutoConfiguration

@@ -7,6 +7,7 @@ import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import com.skybot.irc.config.BotConfiguration;
 import com.skybot.irc.features.AbstractBasicMessageFeature;
 import com.skybot.irc.features.NintendoFriendCode;
+import com.skybot.voice.SkyBotVoice;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,13 +18,11 @@ import java.util.List;
 @Slf4j
 @Component
 public class SkyBot {
-//    static {
-//        System.loadLibrary("snowboy-detect-java");
-//    }
-
     private final String TWITCH_CLIENT_ID_KEY = "twitch_client_id";
     private final String TWITCH_CLIENT_SECRET_KEY = "twitch_client_secret";
     private final String IRC_CREDENTIALS_KEY = "irc";
+
+    private SkyBotVoice voice;
 
     private BotConfiguration botConfiguration;
 
@@ -34,11 +33,11 @@ public class SkyBot {
     private List<AbstractBasicMessageFeature> messageFeatures;
 
     @Autowired
-    public SkyBot(BotConfiguration botConfiguration, NintendoFriendCode nintendoFriendCode) {
-//        SnowboyDetect detector = new SnowboyDetect("resources/commmon.res", "resources/models/snowboy.umdl");
+    public SkyBot(BotConfiguration botConfiguration, SkyBotVoice voice, NintendoFriendCode nintendoFriendCode) {
         log.info("Initializing SkyBot...");
 
         this.botConfiguration = botConfiguration;
+        this.voice = voice;
         this.nintendoFriendCode = nintendoFriendCode;
 
         TwitchClientBuilder clientBuilder = TwitchClientBuilder.builder();
@@ -58,6 +57,10 @@ public class SkyBot {
         registerFeatures();
 
         twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(event -> onChannelMessage(event));
+
+        if(botConfiguration.getVoice()) {
+            this.voice.start();
+        }
 
         start();
     }
