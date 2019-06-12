@@ -3,7 +3,6 @@ package com.skybot.irc.services;
 import ai.kitt.snowboy.SnowboyDetect;
 import com.github.twitch4j.helix.domain.CreateClipList;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.OAuth2ClientContext;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
