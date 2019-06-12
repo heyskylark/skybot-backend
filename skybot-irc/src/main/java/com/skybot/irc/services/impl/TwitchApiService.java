@@ -1,6 +1,7 @@
 package com.skybot.irc.services.impl;
 
 import com.github.twitch4j.helix.domain.User;
+import com.google.gson.JsonObject;
 import com.skybot.irc.services.ITwitchApiService;
 import com.skybot.irc.services.ITwitchHelixService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,14 +36,17 @@ public class TwitchApiService implements ITwitchApiService {
 
         final String uri = HELIX_URI + "/streams/markers";
 
-        final String body = "{\"user_id\": "+user.getId()+"}";
+        JsonObject createClipBody = new JsonObject();
+        createClipBody.addProperty("user_id", user.getId());
 
-        HttpEntity<?> httpEntity = new HttpEntity<>(body, createHeader(MediaType.APPLICATION_JSON, authorization));
+        HttpEntity<?> httpEntity = new HttpEntity<>(createClipBody.toString(),
+                createHeader(MediaType.APPLICATION_JSON, authorization));
 
         try {
             restTemplate.exchange(uri, HttpMethod.POST, httpEntity, String.class);
         } catch(HttpClientErrorException ex) {
             log.error("{}", ex.getResponseBodyAsString());
+            ex.printStackTrace();
         }
     }
 

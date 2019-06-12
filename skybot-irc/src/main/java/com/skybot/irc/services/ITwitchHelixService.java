@@ -7,5 +7,5 @@ public interface ITwitchHelixService {
 
     User getMe();
 
-    CreateClipList createClip(String streamHostName, boolean isDelayed);
+    CreateClipList createClipSelf(boolean isDelayed);
 }

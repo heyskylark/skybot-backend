@@ -43,7 +43,7 @@ public class SkyBot {
         twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(event -> onChannelMessage(event));
 
         if(skyBotProperties.isVoice()) {
-            this.voice.start();
+            this.voice.start(skyBotProperties.getChannels().get(0));
         }
 
         start();

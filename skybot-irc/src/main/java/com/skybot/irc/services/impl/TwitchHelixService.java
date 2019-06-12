@@ -4,16 +4,13 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.helix.domain.CreateClip;
 import com.github.twitch4j.helix.domain.CreateClipList;
-import com.github.twitch4j.helix.domain.Stream;
-import com.github.twitch4j.helix.domain.StreamList;
 import com.github.twitch4j.helix.domain.User;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.services.ITwitchHelixService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
 
 @Slf4j
 @Service
@@ -21,7 +18,6 @@ public class TwitchHelixService implements ITwitchHelixService {
 
     private final TwitchClient twitchClient;
     private final OAuth2Credential oAuth2Credential;
-    private final SkyBotProperties botConfiguration;
 
     private final String IRC_CREDENTIALS_KEY = "irc";
 
@@ -31,45 +27,32 @@ public class TwitchHelixService implements ITwitchHelixService {
                               SkyBotProperties botConfiguration) {
         this.twitchClient = twitchClient;
         this.oAuth2Credential = oAuth2Credential;
-        this.botConfiguration = botConfiguration;
     }
 
     @Override
     public User getMe() {
-        return twitchClient.getHelix().getUsers(oAuth2Credential.getAccessToken(), null, null).execute().getUsers().get(0);
+        return twitchClient.getHelix().getUsers(oAuth2Credential.getAccessToken(), null, null)
+                .execute().getUsers().get(0);
     }
 
     @Override
-    public CreateClipList createClip(String streamHostName, boolean isDelayed) {
-        // Get broadcaster id
+    public CreateClipList createClipSelf(boolean isDelayed) {
         // Check of broadcaster is streaming
-        // Check if clip is made
+        User user = getMe();
+        log.debug("Got user: {} {}", user.getId(), user.getDisplayName());
 
-        StreamList streams = twitchClient.getHelix().getStreams("", "", 1, null, null, null,
-                null, Arrays.asList(streamHostName)).execute();
+        try {
+            CreateClipList list = twitchClient.getHelix().createClip(oAuth2Credential.getAccessToken(),
+                    Long.toString(user.getId()), isDelayed).execute();
 
-        if(streams.getStreams().isEmpty()) {
-            log.info("Stream not playing.");
-        } else {
-            Stream stream = streams.getStreams().get(0);
-            log.info("Got stream: {} {}", stream.getId(), stream.getTitle());
+            CreateClip clip = list.getData().get(0);
 
-            try {
-                log.info("{}", oAuth2Credential);
-                CreateClipList list = twitchClient.getHelix().createClip(oAuth2Credential.getAccessToken(),
-                        Long.toString(stream.getId()), isDelayed).execute();
+            log.info("Clip info {} {}", clip.getId(), clip.getEditUrl());
 
-                CreateClip clip = list.getData().get(0);
-
-                log.info("Clip info {} {}", clip.getId(), clip.getEditUrl());
-
-                // Check if clip is created by query getClip with clipId
-
-                return list;
-            } catch(Exception e) {
-                log.error("{} {}", e, e.getMessage());
-                e.printStackTrace();
-            }
+            return list;
+        } catch(Exception e) {
+            log.error("{} {}", e, e.getMessage());
+            e.printStackTrace();
         }
 
         return null;

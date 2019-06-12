@@ -1,10 +1,8 @@
 package com.skybot.irc.components;
 
 import ai.kitt.snowboy.SnowboyDetect;
-import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 import com.skybot.irc.services.HotWordService;
-import com.skybot.irc.services.ITwitchApiService;
-import com.skybot.irc.services.ITwitchHelixService;
+import com.skybot.irc.services.IVoiceCommandService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,18 +18,12 @@ public class SkyBotVoice {
         System.loadLibrary("snowboy-detect-java");
     }
 
-    private SnowboyDetect detector;
+    private final SnowboyDetect detector;
 
-    private OAuth2Credential oAuth2Credential;
-
-    private ITwitchHelixService twitchHelixService;
-
-    private ITwitchApiService twitchApiService;
+    private final IVoiceCommandService voiceCommandService;
 
     @Autowired
-    public SkyBotVoice(OAuth2Credential oAuth2Credential,
-                       ITwitchHelixService twitchHelixService,
-                       ITwitchApiService twitchApiService) {
+    public SkyBotVoice(IVoiceCommandService voiceCommandService) {
         detector = new SnowboyDetect(
                 "resources/common.res",
                 "resources/models/snowboy.umdl"
@@ -41,19 +33,17 @@ public class SkyBotVoice {
         detector.SetAudioGain(1);
         detector.ApplyFrontend(false);
 
-        this.oAuth2Credential = oAuth2Credential;
-        this.twitchHelixService = twitchHelixService;
-        this.twitchApiService = twitchApiService;
+        this.voiceCommandService = voiceCommandService;
     }
 
-    public void start() {
+    public void start(String channel) {
         log.info("Starting voice component.");
 
         AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
         DataLine.Info targetInfo = new DataLine.Info(TargetDataLine.class, format);
 
         HotWordService hotWordService = new HotWordService("Snowboy Service", detector, format, targetInfo,
-                oAuth2Credential, twitchHelixService, twitchApiService);
+               voiceCommandService, channel);
         hotWordService.start();
     }
 }

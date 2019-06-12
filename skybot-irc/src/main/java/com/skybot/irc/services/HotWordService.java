@@ -1,8 +1,9 @@
 package com.skybot.irc.services;
 
 import ai.kitt.snowboy.SnowboyDetect;
-import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
+import com.github.twitch4j.helix.domain.CreateClipList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.client.OAuth2ClientContext;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -14,29 +15,29 @@ import java.nio.ByteOrder;
 @Slf4j
 public class HotWordService extends Thread {
 
-    private SnowboyDetect detector;
+    private final SnowboyDetect detector;
 
-    private AudioFormat format;
+    private final AudioFormat format;
 
-    private DataLine.Info targetInfo;
+    private final DataLine.Info targetInfo;
 
-    private OAuth2Credential oAuth2Credential;
+    private final IVoiceCommandService voiceCommandService;
 
-    private ITwitchHelixService twitchHelixService;
+    private final String CHANNEL;
 
-    private ITwitchApiService twitchApiService;
-
-    public HotWordService (String threadName, SnowboyDetect detector, AudioFormat format, DataLine.Info targetInfo,
-                           OAuth2Credential oAuth2Credential, ITwitchHelixService twitchHelixService,
-                           ITwitchApiService twitchApiService) {
+    public HotWordService (String threadName,
+                           SnowboyDetect detector,
+                           AudioFormat format,
+                           DataLine.Info targetInfo,
+                           IVoiceCommandService voiceCommandService,
+                           String channel) {
         super(threadName);
 
         this.detector = detector;
         this.format = format;
         this.targetInfo = targetInfo;
-        this.oAuth2Credential = oAuth2Credential;
-        this.twitchHelixService = twitchHelixService;
-        this.twitchApiService = twitchApiService;
+        this.voiceCommandService = voiceCommandService;
+        this.CHANNEL = channel;
     }
 
     public void run() {
@@ -70,7 +71,7 @@ public class HotWordService extends Thread {
                 int result = detector.RunDetection(snowboyData, snowboyData.length);
                 if (result > 0) {
                     log.info("Hotword {} detected!", result);
-//                    twitchApiService.createStreamMarker(oAuth2Credential.getAccessToken());
+//                    voiceCommandService.createClipAndShare(CHANNEL);
                 }
             }
         } catch (Exception e) {
