@@ -59,6 +59,8 @@ public class SkyBot {
                 authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
         // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
         // config to get credentials then, and then apply to twitchClient...
+        // Maybe anything that uses User Token, instead of using TwitchClient use OAuthRestTemplate to make calls to twitch
+        // and then use the twitch4j models for the twitch return payload...
         log.info("Successful login, logging in {}", userPrincipal.getUserName());
         joinChannel(userPrincipal.getLogin());
     }
