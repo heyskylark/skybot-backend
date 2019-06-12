@@ -30,8 +30,5 @@ public class SkyBotProperties {
     @NotNull
     private Map<String, String> credentials;
 
-    @NotNull
-    private List<String> channels;
-
     private String nintendoFriendCode;
 }

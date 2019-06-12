@@ -1,7 +1,7 @@
 package com.skybot.irc.features;
 
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
-import com.skybot.irc.config.BotConfiguration;
+import com.skybot.irc.config.SkyBotProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,11 +16,11 @@ public class NintendoFriendCode extends AbstractBasicMessageFeature {
     private String fc_message;
 
     @Autowired
-    public NintendoFriendCode(BotConfiguration botConfiguration) {
+    public NintendoFriendCode(SkyBotProperties skyBotProperties) {
         super(TRIGGER, DESCRIPTION);
 
-        if(botConfiguration.getNintendoFriendCode() != null) {
-            fc_message = "Nintendo friend code: " + botConfiguration.getNintendoFriendCode();
+        if(skyBotProperties.getNintendoFriendCode() != null) {
+            fc_message = "Nintendo friend code: " + skyBotProperties.getNintendoFriendCode();
         }
     }
 
