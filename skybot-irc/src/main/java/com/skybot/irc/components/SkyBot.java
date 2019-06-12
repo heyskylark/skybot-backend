@@ -14,7 +14,6 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 @Slf4j
@@ -30,8 +29,6 @@ public class SkyBot {
     private NintendoFriendCode nintendoFriendCode;
 
     private List<AbstractBasicMessageFeature> messageFeatures;
-
-    private final String LOGIN_INFO = "login";
 
     @Autowired
     public SkyBot(SkyBotProperties skyBotProperties,
@@ -52,6 +49,7 @@ public class SkyBot {
 //        if(skyBotProperties.isVoice()) {
 //            this.voice.start(skyBotProperties.getChannels().get(0));
 //        }
+        // Look into spring boot threads sent in email to self
     }
 
     @EventListener
@@ -59,6 +57,8 @@ public class SkyBot {
         ObjectMapper objectMapper = new ObjectMapper();
         UserPrincipal userPrincipal = objectMapper.convertValue(
                 authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
+        // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
+        // config to get credentials then, and then apply to twitchClient...
         log.info("Successful login, logging in {}", userPrincipal.getUserName());
         joinChannel(userPrincipal.getLogin());
     }
