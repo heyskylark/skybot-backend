@@ -7,6 +7,7 @@ import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.features.AbstractBasicMessageFeature;
 import com.skybot.irc.features.NintendoFriendCode;
 import com.skybot.irc.models.UserPrincipal;
+import com.skybot.irc.services.IAudioRecognitionSerivce;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -30,17 +31,21 @@ public class SkyBot {
 
     private List<AbstractBasicMessageFeature> messageFeatures;
 
+    private IAudioRecognitionSerivce audioRecognitionSerivce;
+
     @Autowired
     public SkyBot(SkyBotProperties skyBotProperties,
                   SkyBotVoice voice,
                   NintendoFriendCode nintendoFriendCode,
-                  TwitchClient twitchClient) {
+                  TwitchClient twitchClient,
+                  IAudioRecognitionSerivce audioRecognitionSerivce) {
         log.info("Initializing SkyBot.");
 
         this.twitchClient = twitchClient;
         this.skyBotProperties = skyBotProperties;
         this.voice = voice;
         this.nintendoFriendCode = nintendoFriendCode;
+        this.audioRecognitionSerivce = audioRecognitionSerivce;
 
         registerFeatures();
 
@@ -63,6 +68,11 @@ public class SkyBot {
         // and then use the twitch4j models for the twitch return payload...
         log.info("Successful login, logging in {}", userPrincipal.getUserName());
         joinChannel(userPrincipal.getLogin());
+        try {
+            audioRecognitionSerivce.streamingRecognize();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void joinChannel(String login) {

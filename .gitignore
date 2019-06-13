@@ -52,5 +52,4 @@ bower_components/
 .config/
 /coverage
 .env.*
-botConfig.json
-application.yml
+**/resources/config/*
