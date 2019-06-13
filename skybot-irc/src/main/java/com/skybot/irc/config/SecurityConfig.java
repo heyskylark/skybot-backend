@@ -19,15 +19,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new TwitchPrincipalExtractor();
     }
 
-//    @EventListener
-//    public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
-//        System.out.println("User Oauth2 login success");
-//        System.out.println("Creds: " + authorizedEvent.getAuthentication().getCredentials());
-//        System.out.println("Details: " + authorizedEvent.getAuthentication().getDetails());
-//        System.out.println("Authorities: " + authorizedEvent.getAuthentication().getAuthorities());
-//        System.out.println("This is success event : " + authorizedEvent.getAuthentication().getPrincipal());
-//    }
-
     @EventListener
     public void authFailedEventListener(AbstractAuthenticationFailureEvent oAuth2AuthenticationFailureEvent){
         // write custom code here login failed audit.

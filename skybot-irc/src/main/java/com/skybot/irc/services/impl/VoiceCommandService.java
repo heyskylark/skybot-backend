@@ -19,15 +19,12 @@ public class VoiceCommandService implements IVoiceCommandService {
 
     private final ITwitchHelixService twitchHelixService;
     private final TwitchClient twitchClient;
-    private final OAuth2ClientContext oAuth2ClientContext;
 
     @Autowired
     public VoiceCommandService(ITwitchHelixService twitchHelixService,
-                               TwitchClient twitchClient,
-                               OAuth2ClientContext oAuth2ClientContext) {
+                               TwitchClient twitchClient) {
         this.twitchHelixService = twitchHelixService;
         this.twitchClient = twitchClient;
-        this.oAuth2ClientContext = oAuth2ClientContext;
     }
 
     @Override
@@ -58,6 +55,6 @@ public class VoiceCommandService implements IVoiceCommandService {
     }
 
     public void check() {
-        log.info("TEST {}", oAuth2ClientContext.getAccessToken().getValue());
+        log.info("TEST");
     }
 }

@@ -7,7 +7,6 @@ import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.features.AbstractBasicMessageFeature;
 import com.skybot.irc.features.NintendoFriendCode;
 import com.skybot.irc.models.UserPrincipal;
-import com.skybot.irc.services.IAudioRecognitionSerivce;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -31,30 +30,21 @@ public class SkyBot {
 
     private List<AbstractBasicMessageFeature> messageFeatures;
 
-    private IAudioRecognitionSerivce audioRecognitionSerivce;
-
     @Autowired
     public SkyBot(SkyBotProperties skyBotProperties,
                   SkyBotVoice voice,
                   NintendoFriendCode nintendoFriendCode,
-                  TwitchClient twitchClient,
-                  IAudioRecognitionSerivce audioRecognitionSerivce) {
+                  TwitchClient twitchClient) {
         log.info("Initializing SkyBot.");
 
         this.twitchClient = twitchClient;
         this.skyBotProperties = skyBotProperties;
         this.voice = voice;
         this.nintendoFriendCode = nintendoFriendCode;
-        this.audioRecognitionSerivce = audioRecognitionSerivce;
 
         registerFeatures();
 
         twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(event -> onChannelMessage(event));
-
-//        if(skyBotProperties.isVoice()) {
-//            this.voice.start(skyBotProperties.getChannels().get(0));
-//        }
-        // Look into spring boot threads sent in email to self
     }
 
     @EventListener
@@ -62,16 +52,16 @@ public class SkyBot {
         ObjectMapper objectMapper = new ObjectMapper();
         UserPrincipal userPrincipal = objectMapper.convertValue(
                 authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
+
         // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
         // config to get credentials then, and then apply to twitchClient...
         // Maybe anything that uses User Token, instead of using TwitchClient use OAuthRestTemplate to make calls to twitch
         // and then use the twitch4j models for the twitch return payload...
+
         log.info("Successful login, logging in {}", userPrincipal.getUserName());
         joinChannel(userPrincipal.getLogin());
-        try {
-            audioRecognitionSerivce.streamingRecognize();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        if(skyBotProperties.isVoice()) {
+            this.voice.start();
         }
     }
 

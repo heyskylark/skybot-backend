@@ -1,6 +1,6 @@
 package com.skybot.irc.services;
 
-public interface IAudioRecognitionSerivce {
+public interface IAudioRecognitionService {
 
     /**
      * Peforms audio stream recognition using google speech-to-text

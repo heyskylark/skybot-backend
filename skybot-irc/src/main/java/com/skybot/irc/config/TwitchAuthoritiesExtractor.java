@@ -22,8 +22,6 @@ public class TwitchAuthoritiesExtractor implements AuthoritiesExtractor {
     @Override
     public List<GrantedAuthority> extractAuthorities
             (Map<String, Object> map) {
-        log.info("IS THIS WORKING?");
-
         if (Objects.nonNull(map.get("plan"))) {
             if (!((LinkedHashMap) map.get("plan"))
                     .get("name")

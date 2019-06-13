@@ -11,11 +11,12 @@ import com.google.cloud.speech.v1p1beta1.StreamingRecognitionResult;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeRequest;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
-import com.skybot.irc.services.IAudioRecognitionSerivce;
+import com.skybot.irc.services.IAudioRecognitionService;
 import lombok.extern.slf4j.Slf4j;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 import javax.sound.sampled.AudioFormat;
@@ -29,16 +30,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Service
-public class AudioRecognitionService implements IAudioRecognitionSerivce {
+public class AudioRecognitionService implements IAudioRecognitionService {
 
     private static final int STREAMING_LIMIT = 10000; // ~10 seconds
 
-    public static final String RED = "\033[0;31m";
-    public static final String GREEN = "\033[0;32m";
-    public static final String YELLOW = "\033[0;33m";
+    private static final String RED = "\033[0;31m";
+    private static final String GREEN = "\033[0;32m";
+    private static final String YELLOW = "\033[0;33m";
 
     // Creating shared object
-    private static volatile BlockingQueue<byte[]> sharedQueue = new LinkedBlockingQueue();
+    private static volatile BlockingQueue<byte[]> sharedQueue = new LinkedBlockingQueue<>();
     private static TargetDataLine targetDataLine;
     private static int BYTES_PER_BUFFER = 6400; // buffer size in bytes
 
@@ -50,15 +51,18 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
     private static int finalRequestEndTime = 0;
     private static boolean newStream = true;
     private static double bridgingOffset = 0;
-    private static boolean lastTranscriptWasFinal = false;
+    private boolean lastTranscriptWasFinal = false;
     private static StreamController referenceToStreamController;
     private static ByteString tempByteString;
 
     private final SpeechSettings speechSettings;
+    private final TaskExecutor taskExecutor;
 
     @Autowired
-    public AudioRecognitionService(SpeechSettings speechSettings) {
+    public AudioRecognitionService(SpeechSettings speechSettings,
+                                   TaskExecutor taskExecutor) {
         this.speechSettings = speechSettings;
+        this.taskExecutor = taskExecutor;
     }
 
     /**
@@ -66,6 +70,8 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
      */
     @Override
     public void streamingRecognize() throws Exception {
+        lastTranscriptWasFinal = false;
+
         // Microphone Input buffering
         class MicBuffer implements Runnable {
 
@@ -91,9 +97,18 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
         }
 
         // Creating microphone input buffer thread
+
+        // Logic for when to end
+        // 1. When talking stops and response is received...
+        // 2. 3 second time limit before stopping to wait for responses (or no audio? Way to have audio gate in java?).
+        //      Resets timer on each response and parses a sentence together
+        //      Filter out filler words such as um, uhh, ahh (can be used to extend the timer though)
+        //      When doesn't recognize, just say "I didn't get that."
+        //4. A final response is compared to commands with a threshold for how related they are.
+        //      They must pass the relation threshold to use that command.
         MicBuffer micrunnable = new MicBuffer();
         Thread micThread = new Thread(micrunnable);
-        ResponseObserver<StreamingRecognizeResponse> responseObserver = null;
+        ResponseObserver<StreamingRecognizeResponse> responseObserver;
         try (SpeechClient client = SpeechClient.create(speechSettings)) {
             ClientStream<StreamingRecognizeRequest> clientStream;
             responseObserver =
@@ -106,7 +121,6 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
                         }
 
                         public void onResponse(StreamingRecognizeResponse response) {
-
                             responses.add(response);
 
                             StreamingRecognitionResult result = response.getResultsList().get(0);
@@ -194,8 +208,8 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
 
                     long estimatedTime = System.currentTimeMillis() - startTime;
 
-                    if (estimatedTime >= STREAMING_LIMIT) {
-
+                    if (lastTranscriptWasFinal || estimatedTime >= STREAMING_LIMIT) {
+                        targetDataLine.close();
                         clientStream.closeSend();
                         referenceToStreamController.cancel(); // remove Observer
 
@@ -207,62 +221,8 @@ public class AudioRecognitionService implements IAudioRecognitionSerivce {
                         lastAudioInput = null;
                         lastAudioInput = audioInput;
                         audioInput = new ArrayList<ByteString>();
-
-                        restartCounter++;
-
-                        if (!lastTranscriptWasFinal) {
-                            System.out.print('\n');
-                        }
-
-                        newStream = true;
-
-                        clientStream = client.streamingRecognizeCallable().splitCall(responseObserver);
-
-                        request =
-                                StreamingRecognizeRequest.newBuilder()
-                                        .setStreamingConfig(streamingRecognitionConfig)
-                                        .build();
-
-                        System.out.println(YELLOW);
-                        System.out.printf("%d: RESTARTING REQUEST\n", restartCounter * STREAMING_LIMIT);
-
-                        startTime = System.currentTimeMillis();
-
+                        break;
                     } else {
-
-                        if ((newStream) && (lastAudioInput.size() > 0)) {
-                            // if this is the first audio from a new request
-                            // calculate amount of unfinalized audio from last request
-                            // resend the audio to the speech client before incoming audio
-                            double chunkTime = STREAMING_LIMIT / lastAudioInput.size();
-                            // ms length of each chunk in previous request audio arrayList
-                            if (chunkTime != 0) {
-                                if (bridgingOffset < 0) {
-                                    // bridging Offset accounts for time of resent audio
-                                    // calculated from last request
-                                    bridgingOffset = 0;
-                                }
-                                if (bridgingOffset > finalRequestEndTime) {
-                                    bridgingOffset = finalRequestEndTime;
-                                }
-                                int chunksFromMS = (int) Math.floor((finalRequestEndTime
-                                        - bridgingOffset) / chunkTime);
-                                // chunks from MS is number of chunks to resend
-                                bridgingOffset = (int) Math.floor((lastAudioInput.size()
-                                        - chunksFromMS) * chunkTime);
-                                // set bridging offset for next request
-                                for (int i = chunksFromMS; i < lastAudioInput.size(); i++) {
-
-                                    request =
-                                            StreamingRecognizeRequest.newBuilder()
-                                                    .setAudioContent(lastAudioInput.get(i))
-                                                    .build();
-                                    clientStream.send(request);
-                                }
-                            }
-                            newStream = false;
-                        }
-
                         tempByteString = ByteString.copyFrom(sharedQueue.take());
 
                         request =

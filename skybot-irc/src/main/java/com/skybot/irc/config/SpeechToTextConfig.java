@@ -6,12 +6,9 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.speech.v1p1beta1.SpeechSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +26,8 @@ public class SpeechToTextConfig {
 
     @Bean
     public SpeechSettings speechSettings() {
-        log.info("Creating speech settings");
+        log.info("Generating speech credentials and settings");
+
         try {
             File resource = new ClassPathResource(skyBotProperties.getCredentials().get(GOOGLE_ACCOUNT)).getFile();
             CredentialsProvider credentialsProvider = FixedCredentialsProvider
@@ -40,20 +38,8 @@ public class SpeechToTextConfig {
         } catch(FileNotFoundException ex) {
             log.error("Could not find the file");
             ex.printStackTrace();
-        } catch (IOException ex2) {
-
-        }
+        } catch (IOException ignore) { }
 
         return null;
     }
-
-//    @Bean
-//    public GoogleCredential googleCredential() {
-//        GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
-//        Plus plus = new Plus.builder(new NetHttpTransport(),
-//                JacksonFactory.getDefaultInstance(),
-//                credential)
-//                .setApplicationName("Google-PlusSample/1.0")
-//                .build();
-//    }
 }

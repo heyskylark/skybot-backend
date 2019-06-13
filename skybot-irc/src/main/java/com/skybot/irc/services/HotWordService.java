@@ -1,8 +1,8 @@
 package com.skybot.irc.services;
 
 import ai.kitt.snowboy.SnowboyDetect;
-import com.github.twitch4j.helix.domain.CreateClipList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -12,7 +12,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 @Slf4j
-public class HotWordService extends Thread {
+@Component
+public class HotWordService implements Runnable {
+
+    private final IVoiceCommandService voiceCommandService;
+
+    private final IAudioRecognitionService audioRecognitionService;
 
     private final SnowboyDetect detector;
 
@@ -20,23 +25,22 @@ public class HotWordService extends Thread {
 
     private final DataLine.Info targetInfo;
 
-    private final IVoiceCommandService voiceCommandService;
+    public HotWordService (IVoiceCommandService voiceCommandService,
+                           IAudioRecognitionService audioRecognitionService) {
+        detector = new SnowboyDetect(
+                "resources/common.res",
+                "resources/models/snowboy.umdl"
+        );
 
-    private final String CHANNEL;
+        detector.SetSensitivity("0.5");
+        detector.SetAudioGain(1);
+        detector.ApplyFrontend(false);
 
-    public HotWordService (String threadName,
-                           SnowboyDetect detector,
-                           AudioFormat format,
-                           DataLine.Info targetInfo,
-                           IVoiceCommandService voiceCommandService,
-                           String channel) {
-        super(threadName);
+        this.format = new AudioFormat(16000, 16, 1, true, false);
+        this.targetInfo = new DataLine.Info(TargetDataLine.class, format);
 
-        this.detector = detector;
-        this.format = format;
-        this.targetInfo = targetInfo;
         this.voiceCommandService = voiceCommandService;
-        this.CHANNEL = channel;
+        this.audioRecognitionService = audioRecognitionService;
     }
 
     public void run() {
@@ -70,6 +74,11 @@ public class HotWordService extends Thread {
                 int result = detector.RunDetection(snowboyData, snowboyData.length);
                 if (result > 0) {
                     log.info("Hotword {} detected!", result);
+                    try {
+                        audioRecognitionService.streamingRecognize();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
 //                    voiceCommandService.createClipAndShare(CHANNEL);
                 }
             }

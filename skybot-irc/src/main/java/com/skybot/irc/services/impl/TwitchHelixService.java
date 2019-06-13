@@ -9,7 +9,6 @@ import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.services.ITwitchHelixService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -19,12 +18,9 @@ public class TwitchHelixService implements ITwitchHelixService {
     private final TwitchClient twitchClient;
     private final OAuth2Credential oAuth2Credential;
 
-    private final String IRC_CREDENTIALS_KEY = "irc";
-
     @Autowired
     public TwitchHelixService(TwitchClient twitchClient,
-                              OAuth2Credential oAuth2Credential,
-                              SkyBotProperties botConfiguration) {
+                              OAuth2Credential oAuth2Credential) {
         this.twitchClient = twitchClient;
         this.oAuth2Credential = oAuth2Credential;
     }
