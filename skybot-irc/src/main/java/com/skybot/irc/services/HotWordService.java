@@ -15,8 +15,6 @@ import java.nio.ByteOrder;
 @Component
 public class HotWordService implements Runnable {
 
-    private final IVoiceCommandService voiceCommandService;
-
     private final IAudioRecognitionService audioRecognitionService;
 
     private final SnowboyDetect detector;
@@ -25,8 +23,7 @@ public class HotWordService implements Runnable {
 
     private final DataLine.Info targetInfo;
 
-    public HotWordService (IVoiceCommandService voiceCommandService,
-                           IAudioRecognitionService audioRecognitionService) {
+    public HotWordService (IAudioRecognitionService audioRecognitionService) {
         detector = new SnowboyDetect(
                 "resources/common.res",
                 "resources/models/snowboy.umdl"
@@ -39,7 +36,6 @@ public class HotWordService implements Runnable {
         this.format = new AudioFormat(16000, 16, 1, true, false);
         this.targetInfo = new DataLine.Info(TargetDataLine.class, format);
 
-        this.voiceCommandService = voiceCommandService;
         this.audioRecognitionService = audioRecognitionService;
     }
 
@@ -79,7 +75,6 @@ public class HotWordService implements Runnable {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
-//                    voiceCommandService.createClipAndShare(CHANNEL);
                 }
             }
         } catch (Exception e) {

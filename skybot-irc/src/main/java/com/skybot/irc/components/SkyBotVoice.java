@@ -32,6 +32,6 @@ public class SkyBotVoice {
 
     public void start() {
         log.info("Starting voice component.");
-        taskExecutor.execute(new HotWordService(voiceCommandService, audioRecognitionService));
+        taskExecutor.execute(new HotWordService(audioRecognitionService));
     }
 }

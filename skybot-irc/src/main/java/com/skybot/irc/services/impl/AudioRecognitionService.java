@@ -12,6 +12,8 @@ import com.google.cloud.speech.v1p1beta1.StreamingRecognizeRequest;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import com.skybot.irc.services.IAudioRecognitionService;
+import com.skybot.irc.services.IVoiceCommandService;
+import com.skybot.irc.utility.TextColor;
 import lombok.extern.slf4j.Slf4j;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeResponse;
@@ -34,33 +36,27 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
     private static final int STREAMING_LIMIT = 10000; // ~10 seconds
 
-    private static final String RED = "\033[0;31m";
-    private static final String GREEN = "\033[0;32m";
-    private static final String YELLOW = "\033[0;33m";
-
     // Creating shared object
     private static volatile BlockingQueue<byte[]> sharedQueue = new LinkedBlockingQueue<>();
     private static TargetDataLine targetDataLine;
     private static int BYTES_PER_BUFFER = 6400; // buffer size in bytes
 
     private static int restartCounter = 0;
-    private static ArrayList<ByteString> audioInput  = new ArrayList<ByteString>();
-    private static ArrayList<ByteString> lastAudioInput = new ArrayList<ByteString>();
     private static int resultEndTimeInMS = 0;
     private static int isFinalEndTime = 0;
-    private static int finalRequestEndTime = 0;
-    private static boolean newStream = true;
     private static double bridgingOffset = 0;
     private boolean lastTranscriptWasFinal = false;
     private static StreamController referenceToStreamController;
-    private static ByteString tempByteString;
 
+    private final IVoiceCommandService voiceCommandService;
     private final SpeechSettings speechSettings;
     private final TaskExecutor taskExecutor;
 
     @Autowired
-    public AudioRecognitionService(SpeechSettings speechSettings,
+    public AudioRecognitionService(IVoiceCommandService voiceCommandService,
+                                   SpeechSettings speechSettings,
                                    TaskExecutor taskExecutor) {
+        this.voiceCommandService = voiceCommandService;
         this.speechSettings = speechSettings;
         this.taskExecutor = taskExecutor;
     }
@@ -77,7 +73,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
             @Override
             public void run() {
-                log.info(YELLOW);
+                log.info(TextColor.YELLOW);
                 log.info("Mic is now listening.");
 
                 targetDataLine.start();
@@ -96,18 +92,6 @@ public class AudioRecognitionService implements IAudioRecognitionService {
             }
         }
 
-        // Creating microphone input buffer thread
-
-        // Logic for when to end
-        // 1. When talking stops and response is received...
-        // 2. 3 second time limit before stopping to wait for responses (or no audio? Way to have audio gate in java?).
-        //      Resets timer on each response and parses a sentence together
-        //      Filter out filler words such as um, uhh, ahh (can be used to extend the timer though)
-        //      When doesn't recognize, just say "I didn't get that."
-        //4. A final response is compared to commands with a threshold for how related they are.
-        //      They must pass the relation threshold to use that command.
-        MicBuffer micrunnable = new MicBuffer();
-        Thread micThread = new Thread(micrunnable);
         ResponseObserver<StreamingRecognizeResponse> responseObserver;
         try (SpeechClient client = SpeechClient.create(speechSettings)) {
             ClientStream<StreamingRecognizeRequest> clientStream;
@@ -136,15 +120,18 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
                             SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
                             if (result.getIsFinal()) {
-                                System.out.print(GREEN);
+                                System.out.print(TextColor.GREEN);
                                 System.out.print("\033[2K\r");
                                 System.out.printf("%s: %s\n", format.format(correctedTime),
                                         alternative.getTranscript());
 
                                 isFinalEndTime = resultEndTimeInMS;
                                 lastTranscriptWasFinal = true;
+                                System.out.print(TextColor.RESET);
+
+                                voiceCommandService.findCommand(alternative.getTranscript());
                             } else {
-                                System.out.print(RED);
+                                System.out.print(TextColor.RED);
                                 System.out.print("\033[2K\r");
                                 System.out.printf("%s: %s", format.format(correctedTime),
                                         alternative.getTranscript());
@@ -157,6 +144,8 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                         }
 
                         public void onError(Throwable t) {
+                            log.error("Problem deciphering speech: {}", t.getMessage());
+                            //TODO crashes! Need to handle so it doesn't take down snowboy with it :(
                         }
 
                     };
@@ -187,11 +176,8 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                 // SampleRate:16000Hz, SampleSizeInBits: 16, Number of channels: 1, Signed: true,
                 // bigEndian: false
                 AudioFormat audioFormat = new AudioFormat(16000, 16, 1, true, false);
-                Info targetInfo =
-                        new Info(
-                                TargetDataLine.class,
-                                audioFormat); // Set the system information to read from the microphone audio
-                // stream
+                // Set the system information to read from the microphone audio stream
+                Info targetInfo = new Info(TargetDataLine.class, audioFormat);
 
                 if (!AudioSystem.isLineSupported(targetInfo)) {
                     System.out.println("Microphone not supported");
@@ -200,7 +186,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                 // Target data line captures the audio stream the microphone produces.
                 targetDataLine = (TargetDataLine) AudioSystem.getLine(targetInfo);
                 targetDataLine.open(audioFormat);
-                micThread.start();
+                taskExecutor.execute(new MicBuffer());
 
                 long startTime = System.currentTimeMillis();
 
@@ -213,25 +199,15 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                         clientStream.closeSend();
                         referenceToStreamController.cancel(); // remove Observer
 
-                        if (resultEndTimeInMS > 0) {
-                            finalRequestEndTime = isFinalEndTime;
-                        }
                         resultEndTimeInMS = 0;
-
-                        lastAudioInput = null;
-                        lastAudioInput = audioInput;
-                        audioInput = new ArrayList<ByteString>();
                         break;
                     } else {
-                        tempByteString = ByteString.copyFrom(sharedQueue.take());
+                        ByteString tempByteString = ByteString.copyFrom(sharedQueue.take());
 
                         request =
                                 StreamingRecognizeRequest.newBuilder()
                                         .setAudioContent(tempByteString)
                                         .build();
-
-                        audioInput.add(tempByteString);
-
                     }
 
                     clientStream.send(request);
