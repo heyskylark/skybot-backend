@@ -20,13 +20,13 @@ import java.util.List;
 @Component
 public class SkyBot {
 
-    private SkyBotVoice voice;
+    private final SkyBotVoice voice;
 
-    private SkyBotProperties skyBotProperties;
+    private final SkyBotProperties skyBotProperties;
 
-    private TwitchClient twitchClient;
+    private final TwitchClient twitchClient;
 
-    private NintendoFriendCode nintendoFriendCode;
+    private final NintendoFriendCode nintendoFriendCode;
 
     private List<AbstractBasicMessageFeature> messageFeatures;
 
@@ -44,7 +44,7 @@ public class SkyBot {
 
         registerFeatures();
 
-        twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(event -> onChannelMessage(event));
+        twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(this::onChannelMessage);
     }
 
     @EventListener

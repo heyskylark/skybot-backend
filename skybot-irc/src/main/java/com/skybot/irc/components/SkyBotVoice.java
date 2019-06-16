@@ -2,7 +2,6 @@ package com.skybot.irc.components;
 
 import com.skybot.irc.services.HotWordService;
 import com.skybot.irc.services.IAudioRecognitionService;
-import com.skybot.irc.services.IVoiceCommandService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
@@ -15,23 +14,19 @@ public class SkyBotVoice {
         System.loadLibrary("snowboy-detect-java");
     }
 
-    private final IVoiceCommandService voiceCommandService;
-
     private final IAudioRecognitionService audioRecognitionService;
 
-    private final TaskExecutor taskExecutor;
+    private final TaskExecutor executor;
 
     @Autowired
-    public SkyBotVoice(IVoiceCommandService voiceCommandService,
-                       IAudioRecognitionService audioRecognitionService,
-                       TaskExecutor taskExecutor) {
-        this.voiceCommandService = voiceCommandService;
+    public SkyBotVoice(IAudioRecognitionService audioRecognitionService,
+                       TaskExecutor executor) {
         this.audioRecognitionService = audioRecognitionService;
-        this.taskExecutor = taskExecutor;
+        this.executor = executor;
     }
 
-    public void start() {
+    void start() {
         log.info("Starting voice component.");
-        taskExecutor.execute(new HotWordService(audioRecognitionService));
+        executor.execute(new HotWordService(audioRecognitionService));
     }
 }

@@ -50,15 +50,15 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
     private final IVoiceCommandService voiceCommandService;
     private final SpeechSettings speechSettings;
-    private final TaskExecutor taskExecutor;
+    private final TaskExecutor executor;
 
     @Autowired
     public AudioRecognitionService(IVoiceCommandService voiceCommandService,
                                    SpeechSettings speechSettings,
-                                   TaskExecutor taskExecutor) {
+                                   TaskExecutor executor) {
         this.voiceCommandService = voiceCommandService;
         this.speechSettings = speechSettings;
-        this.taskExecutor = taskExecutor;
+        this.executor = executor;
     }
 
     /**
@@ -144,7 +144,8 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                         }
 
                         public void onError(Throwable t) {
-                            log.error("Problem deciphering speech: {}", t.getMessage());
+                            log.error("Speech to text error: {}", t.getMessage());
+                            t.printStackTrace();
                             //TODO crashes! Need to handle so it doesn't take down snowboy with it :(
                         }
 
@@ -186,7 +187,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                 // Target data line captures the audio stream the microphone produces.
                 targetDataLine = (TargetDataLine) AudioSystem.getLine(targetInfo);
                 targetDataLine.open(audioFormat);
-                taskExecutor.execute(new MicBuffer());
+                executor.execute(new MicBuffer());
 
                 long startTime = System.currentTimeMillis();
 

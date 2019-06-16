@@ -7,6 +7,7 @@ import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
+import com.skybot.irc.utility.VoiceCommandKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -43,25 +43,24 @@ public class VoiceCommandService implements IVoiceCommandService {
             log.warn("Voice command empty");
             // Do I didn't get that. response
         } else {
-            skyBotProperties.getCommands().forEach((commandValue, commandList) -> {
-                commandList.forEach(commandText -> {
-                    String longer = command, shorter = commandText;
-                    if (command.length() < commandText.length()) { // longer should always have greater length
-                        longer = commandText;
-                        shorter = command;
-                    }
+            skyBotProperties.getCommands().forEach((commandValue, commandList) -> commandList.forEach(commandText -> {
+                // https://stackoverflow.com/questions/955110/similarity-string-comparison-in-javas
+                String longer = command, shorter = commandText;
+                if (command.length() < commandText.length()) { // longer should always have greater length
+                    longer = commandText;
+                    shorter = command;
+                }
 
-                    int longerLength = longer.length();
-                    LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
-                    double similarity = (longerLength -
-                            levenshteinDistance.apply(longer.trim().toLowerCase(), shorter.trim().toLowerCase())) /
-                            (double) longerLength;
-                    if(similarity >= COMMAND_SIMILARITY_THRESHOLD) {
-                        viableCommands.put(commandValue, similarity);
-                        log.info("Threshold met for [{}] and [{}]: Threshold: {}", command, commandText, similarity);
-                    }
-                });
-            });
+                int longerLength = longer.length();
+                LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+                double similarity = (longerLength -
+                        levenshteinDistance.apply(longer.trim().toLowerCase(), shorter.trim().toLowerCase())) /
+                        (double) longerLength;
+                if(similarity >= COMMAND_SIMILARITY_THRESHOLD) {
+                    viableCommands.put(commandValue, similarity);
+                    log.info("Threshold met for [{}] and [{}]: Threshold: {}", command, commandText, similarity);
+                }
+            }));
         }
 
         if(viableCommands.isEmpty()) {
@@ -74,6 +73,8 @@ public class VoiceCommandService implements IVoiceCommandService {
                     .getKey();
 
             log.info("Using command [{}] winning with threshold [{}]", bestCommand, viableCommands.get(bestCommand));
+
+            mapCommand(VoiceCommandKeys.resolve(bestCommand));
         }
     }
 
@@ -104,7 +105,36 @@ public class VoiceCommandService implements IVoiceCommandService {
         }
     }
 
-    public void check() {
-        log.info("TEST");
+    private void mapCommand(VoiceCommandKeys command) {
+        switch (command) {
+            case CLIP:
+                log.info("TEST: {}", twitchHelixService.getMe());
+//                twitchHelixService.createClipSelf(false);
+                break;
+            case START_POLL:
+                log.info("Starting a poll");
+                break;
+            case END_POLL:
+                log.info("Ending the poll");
+                break;
+            case SONG_INFO:
+                log.info("Getting song info");
+                break;
+            case NEXT_SONG:
+                log.info("Next song");
+                break;
+            case PREV_SONG:
+                log.info("Previous song");
+                break;
+            case PLAY_SONG:
+                log.info("Playing song");
+                break;
+            case PAUSE_SONG:
+                log.info("Pausing song");
+                break;
+            default:
+                log.info("I didn't get that.");
+                break;
+        }
     }
 }
