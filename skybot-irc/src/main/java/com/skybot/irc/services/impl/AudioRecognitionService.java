@@ -106,37 +106,38 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
                         public void onResponse(StreamingRecognizeResponse response) {
                             responses.add(response);
+                            if(!response.getResultsList().isEmpty()) {
+                                StreamingRecognitionResult result = response.getResultsList().get(0);
 
-                            StreamingRecognitionResult result = response.getResultsList().get(0);
+                                Duration resultEndTime = result.getResultEndTime();
 
-                            Duration resultEndTime = result.getResultEndTime();
+                                resultEndTimeInMS = (int) ((resultEndTime.getSeconds() * 1000)
+                                        + (resultEndTime.getNanos() / 1000000));
 
-                            resultEndTimeInMS = (int) ((resultEndTime.getSeconds() * 1000)
-                                    + (resultEndTime.getNanos() / 1000000));
+                                double correctedTime = resultEndTimeInMS - bridgingOffset
+                                        + (STREAMING_LIMIT * restartCounter);
+                                DecimalFormat format = new DecimalFormat("0.#");
 
-                            double correctedTime = resultEndTimeInMS - bridgingOffset
-                                    + (STREAMING_LIMIT * restartCounter);
-                            DecimalFormat format = new DecimalFormat("0.#");
+                                SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
+                                if (result.getIsFinal()) {
+                                    System.out.print(TextColor.GREEN);
+                                    System.out.print("\033[2K\r");
+                                    System.out.printf("%s: %s\n", format.format(correctedTime),
+                                            alternative.getTranscript());
 
-                            SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-                            if (result.getIsFinal()) {
-                                System.out.print(TextColor.GREEN);
-                                System.out.print("\033[2K\r");
-                                System.out.printf("%s: %s\n", format.format(correctedTime),
-                                        alternative.getTranscript());
+                                    isFinalEndTime = resultEndTimeInMS;
+                                    lastTranscriptWasFinal = true;
+                                    System.out.print(TextColor.RESET);
 
-                                isFinalEndTime = resultEndTimeInMS;
-                                lastTranscriptWasFinal = true;
-                                System.out.print(TextColor.RESET);
+                                    voiceCommandService.findCommand(alternative.getTranscript());
+                                } else {
+                                    System.out.print(TextColor.RED);
+                                    System.out.print("\033[2K\r");
+                                    System.out.printf("%s: %s", format.format(correctedTime),
+                                            alternative.getTranscript());
 
-                                voiceCommandService.findCommand(alternative.getTranscript());
-                            } else {
-                                System.out.print(TextColor.RED);
-                                System.out.print("\033[2K\r");
-                                System.out.printf("%s: %s", format.format(correctedTime),
-                                        alternative.getTranscript());
-
-                                lastTranscriptWasFinal = false;
+                                    lastTranscriptWasFinal = false;
+                                }
                             }
                         }
 
