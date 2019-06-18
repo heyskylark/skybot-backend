@@ -5,12 +5,14 @@ import com.github.twitch4j.common.exception.NotFoundException;
 import com.github.twitch4j.helix.domain.CreateClipList;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
+import com.skybot.irc.models.UserPrincipal;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
 import com.skybot.irc.utility.VoiceCommandKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,6 +24,7 @@ public class VoiceCommandService implements IVoiceCommandService {
 
     private static final double COMMAND_SIMILARITY_THRESHOLD = 0.64;
 
+    private final UserPrincipal userPrincipal;
     private final ITwitchHelixService twitchHelixService;
     private final TwitchClient twitchClient;
     private final SkyBotProperties skyBotProperties;
@@ -29,8 +32,10 @@ public class VoiceCommandService implements IVoiceCommandService {
     @Autowired
     public VoiceCommandService(ITwitchHelixService twitchHelixService,
                                TwitchClient twitchClient,
+                               UserPrincipal userPrincipal,
                                SkyBotProperties skyBotProperties) {
         this.twitchHelixService = twitchHelixService;
+        this.userPrincipal = userPrincipal;
         this.twitchClient = twitchClient;
         this.skyBotProperties = skyBotProperties;
     }
@@ -108,8 +113,10 @@ public class VoiceCommandService implements IVoiceCommandService {
     private void mapCommand(VoiceCommandKeys command) {
         switch (command) {
             case CLIP:
-                log.info("TEST: {}", twitchHelixService.getMe());
-//                twitchHelixService.createClipSelf(false);
+                CreateClipList createClipList = twitchHelixService.createClipSelf(false);
+                createClipList.getData().forEach(clip ->
+                        twitchClient.getChat().sendMessage(userPrincipal.getLogin(), clip.getEditUrl()));
+                // Assistant voice response saying the clips were made and are in the chat.
                 break;
             case START_POLL:
                 log.info("Starting a poll");

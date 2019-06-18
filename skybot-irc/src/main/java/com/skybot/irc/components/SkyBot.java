@@ -20,6 +20,8 @@ import java.util.List;
 @Component
 public class SkyBot {
 
+    private final UserPrincipal userPrincipal;
+
     private final SkyBotVoice voice;
 
     private final SkyBotProperties skyBotProperties;
@@ -34,12 +36,14 @@ public class SkyBot {
     public SkyBot(SkyBotProperties skyBotProperties,
                   SkyBotVoice voice,
                   NintendoFriendCode nintendoFriendCode,
+                  UserPrincipal userPrincipal,
                   TwitchClient twitchClient) {
         log.info("Initializing SkyBot.");
 
         this.twitchClient = twitchClient;
         this.skyBotProperties = skyBotProperties;
         this.voice = voice;
+        this.userPrincipal = userPrincipal;
         this.nintendoFriendCode = nintendoFriendCode;
 
         registerFeatures();
@@ -49,9 +53,10 @@ public class SkyBot {
 
     @EventListener
     public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
-        ObjectMapper objectMapper = new ObjectMapper();
-        UserPrincipal userPrincipal = objectMapper.convertValue(
-                authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        objectMapper.convertValue(
+//                authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
+        userPrincipal.setFromJson(authorizedEvent.getAuthentication().getPrincipal());
 
         // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
         // config to get credentials then, and then apply to twitchClient...
@@ -59,7 +64,9 @@ public class SkyBot {
         // and then use the twitch4j models for the twitch return payload...
 
         log.info("Successful login, logging in {}", userPrincipal.getUserName());
+
         joinChannel(userPrincipal.getLogin());
+
         if(skyBotProperties.isVoice()) {
             this.voice.start();
         }
