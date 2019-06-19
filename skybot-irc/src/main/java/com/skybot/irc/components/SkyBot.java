@@ -1,6 +1,5 @@
 package com.skybot.irc.components;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import com.skybot.irc.config.SkyBotProperties;
@@ -53,9 +52,6 @@ public class SkyBot {
 
     @EventListener
     public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        objectMapper.convertValue(
-//                authorizedEvent.getAuthentication().getPrincipal(),UserPrincipal.class);
         userPrincipal.setFromJson(authorizedEvent.getAuthentication().getPrincipal());
 
         // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch

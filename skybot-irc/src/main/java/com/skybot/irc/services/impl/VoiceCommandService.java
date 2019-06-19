@@ -6,13 +6,13 @@ import com.github.twitch4j.helix.domain.CreateClipList;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.UserPrincipal;
+import com.skybot.irc.services.ISpotifyClientService;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
 import com.skybot.irc.utility.VoiceCommandKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -27,16 +27,19 @@ public class VoiceCommandService implements IVoiceCommandService {
     private final UserPrincipal userPrincipal;
     private final ITwitchHelixService twitchHelixService;
     private final TwitchClient twitchClient;
+    private final ISpotifyClientService spotifyClientService;
     private final SkyBotProperties skyBotProperties;
 
     @Autowired
     public VoiceCommandService(ITwitchHelixService twitchHelixService,
                                TwitchClient twitchClient,
+                               ISpotifyClientService spotifyClientService,
                                UserPrincipal userPrincipal,
                                SkyBotProperties skyBotProperties) {
         this.twitchHelixService = twitchHelixService;
         this.userPrincipal = userPrincipal;
         this.twitchClient = twitchClient;
+        this.spotifyClientService = spotifyClientService;
         this.skyBotProperties = skyBotProperties;
     }
 
@@ -84,7 +87,7 @@ public class VoiceCommandService implements IVoiceCommandService {
     }
 
     @Override
-    public void createClipAndShare(String channel) {
+    public void createClipSelfAndShare() {
         try {
             CreateClipList createClipList = twitchHelixService.createClipSelf(false);
 
@@ -92,9 +95,9 @@ public class VoiceCommandService implements IVoiceCommandService {
                 createClipList.getData().forEach(clip -> {
                     int indexOfEdit = clip.getEditUrl().lastIndexOf("/edit");
                     String noEditClipUrl = clip.getEditUrl().substring(0, indexOfEdit);
-                    twitchClient.getChat().sendMessage(channel, noEditClipUrl);
+                    twitchClient.getChat().sendMessage(userPrincipal.getLogin(), noEditClipUrl);
 
-                    log.debug("Sent clip url [{}] to channel [{}] chat", noEditClipUrl, channel);
+                    log.debug("Sent clip url [{}] to channel [{}] chat", noEditClipUrl, userPrincipal.getUserName());
                 });
                 // Send confirmation and voice audio through websocket to live client
             } else {
@@ -111,11 +114,11 @@ public class VoiceCommandService implements IVoiceCommandService {
     }
 
     private void mapCommand(VoiceCommandKeys command) {
+        // For spotify: need to verify if logged in, also need to verify if endpoint was successful
+        // Should that be done in SpotifyClientServiceImpl or here???...
         switch (command) {
             case CLIP:
-                CreateClipList createClipList = twitchHelixService.createClipSelf(false);
-                createClipList.getData().forEach(clip ->
-                        twitchClient.getChat().sendMessage(userPrincipal.getLogin(), clip.getEditUrl()));
+                createClipSelfAndShare();
                 // Assistant voice response saying the clips were made and are in the chat.
                 break;
             case START_POLL:
@@ -125,19 +128,19 @@ public class VoiceCommandService implements IVoiceCommandService {
                 log.info("Ending the poll");
                 break;
             case SONG_INFO:
-                log.info("Getting song info");
+                spotifyClientService.getCurrentSong();
                 break;
             case NEXT_SONG:
-                log.info("Next song");
+                spotifyClientService.nextSong();
                 break;
             case PREV_SONG:
-                log.info("Previous song");
+                spotifyClientService.previousSong();
                 break;
             case PLAY_SONG:
-                log.info("Playing song");
+                spotifyClientService.playSong();
                 break;
             case PAUSE_SONG:
-                log.info("Pausing song");
+                spotifyClientService.pauseSong();
                 break;
             default:
                 log.info("I didn't get that.");

@@ -4,5 +4,5 @@ public interface IVoiceCommandService {
 
     void findCommand(String command);
 
-    void createClipAndShare(String channel);
+    void createClipSelfAndShare();
 }
