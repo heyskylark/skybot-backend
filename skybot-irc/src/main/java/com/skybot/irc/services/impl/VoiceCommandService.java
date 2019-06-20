@@ -158,7 +158,6 @@ public class VoiceCommandService implements IVoiceCommandService {
         switch (command) {
             case CLIP:
                 createClipSelfAndShare();
-                // Assistant voice response saying the clips were made and are in the chat.
                 break;
             case START_POLL:
                 log.info("Starting a poll");

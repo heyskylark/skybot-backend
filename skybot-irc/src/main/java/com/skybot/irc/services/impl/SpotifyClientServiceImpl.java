@@ -57,6 +57,10 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
         this.spotify = spotify;
     }
 
+    //TODO Check if there is even a client open right now to interact with to avoid issues if spotify is not opened
+
+    //TODO Check if spotify is logged in before running any commands, best way with less code, maybe spring way?
+
     @Override
     public SpotifyCurrentPlaybackDevice getCurrentlyPlayingDevice() {
         URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENT_DEVICE)
