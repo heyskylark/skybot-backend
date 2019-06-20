@@ -43,7 +43,6 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
     private static int restartCounter = 0;
     private static int resultEndTimeInMS = 0;
-    private static int isFinalEndTime = 0;
     private static double bridgingOffset = 0;
     private boolean lastTranscriptWasFinal = false;
     private static StreamController referenceToStreamController;
@@ -125,7 +124,6 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                                     System.out.printf("%s: %s\n", format.format(correctedTime),
                                             alternative.getTranscript());
 
-                                    isFinalEndTime = resultEndTimeInMS;
                                     lastTranscriptWasFinal = true;
                                     System.out.print(TextColor.RESET);
 

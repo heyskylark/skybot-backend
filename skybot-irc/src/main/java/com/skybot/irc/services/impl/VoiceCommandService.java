@@ -122,33 +122,33 @@ public class VoiceCommandService implements IVoiceCommandService {
 
     @Override
     public void getCurrentlyPlayingSongAndShare() {
-        SpotifyCurrentPlaybackDevice currentPlaybackDevicePlay = spotifyClientService.getCurrentlyPlayingDevice();
-        if(currentPlaybackDevicePlay.getIsPlaying()) {
-            SpotifyCurrentlyPlaying currentlyPlaying = spotifyClientService.getCurrentSong();
-            // AlbumName - SongName by Artist, artist, and artist
+        SpotifyCurrentlyPlaying currentlyPlaying = spotifyClientService.getCurrentSong();
+        if(currentlyPlaying != null) {
             StringBuilder twitchSongInfo = new StringBuilder();
-            twitchSongInfo.append(currentlyPlaying.getItem().getAlbum().getName() + " - ");
-            twitchSongInfo.append(currentlyPlaying.getItem().getName() + " by ");
+            if (currentlyPlaying.getItem() != null) {
+                twitchSongInfo.append(currentlyPlaying.getItem().getAlbum().getName())
+                        .append(" - ")
+                        .append(currentlyPlaying.getItem().getName())
+                        .append(" by ");
 
-            List<SpotifyArtist> artists = currentlyPlaying.getItem().getArtists();
-            int numOfArtist = artists.size();
-            for(int artistIndex = 0; artistIndex < numOfArtist; artistIndex++) {
-                if(artistIndex < numOfArtist - 1) {
-                    twitchSongInfo.append(artists.get(artistIndex).getName() + ", ");
-                } else {
-                    if(numOfArtist > 1) {
-                        twitchSongInfo.append("and ");
+                List<SpotifyArtist> artists = currentlyPlaying.getItem().getArtists();
+                int numOfArtist = artists.size();
+                for (int artistIndex = 0; artistIndex < numOfArtist; artistIndex++) {
+                    if (artistIndex < numOfArtist - 1) {
+                        twitchSongInfo.append(artists.get(artistIndex).getName()).append(", ");
+                    } else {
+                        if (numOfArtist > 1) {
+                            twitchSongInfo.append("and ");
+                        }
+                        twitchSongInfo.append(artists.get(artistIndex).getName());
                     }
-                    twitchSongInfo.append(artists.get(artistIndex).getName());
                 }
-            }
 
-            TwitchChat twitchChat = twitchClient.getChat();
-            twitchChat.sendMessage(userPrincipal.getLogin(), twitchSongInfo.toString());
-            twitchChat.sendMessage(userPrincipal.getLogin(),
-                    currentlyPlaying.getItem().getExternalUrls().get("spotify").toString());
-        } else {
-            log.info("No song is currently playing.");
+                TwitchChat twitchChat = twitchClient.getChat();
+                twitchChat.sendMessage(userPrincipal.getLogin(), twitchSongInfo.toString());
+                twitchChat.sendMessage(userPrincipal.getLogin(),
+                        currentlyPlaying.getItem().getExternalUrls().get("spotify").toString());
+            }
         }
     }
 
@@ -177,12 +177,10 @@ public class VoiceCommandService implements IVoiceCommandService {
                 break;
             case PLAY_SONG:
                 SpotifyCurrentPlaybackDevice currentPlaybackDevicePlay = spotifyClientService.getCurrentlyPlayingDevice();
-                log.info("{}", currentPlaybackDevicePlay);
                 spotifyClientService.playSong(currentPlaybackDevicePlay.getDevice().getId());
                 break;
             case PAUSE_SONG:
                 SpotifyCurrentPlaybackDevice currentPlaybackDevice = spotifyClientService.getCurrentlyPlayingDevice();
-                log.info("{}", currentPlaybackDevice);
                 spotifyClientService.pauseSong(currentPlaybackDevice.getDevice().getId());
                 break;
             default:

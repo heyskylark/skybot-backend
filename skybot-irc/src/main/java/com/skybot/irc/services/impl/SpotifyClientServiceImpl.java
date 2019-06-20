@@ -86,87 +86,103 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
 
     @Override
     public SpotifyCurrentlyPlaying getCurrentSong() {
-        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENTLY_PLAYING_URI)
-                .build().toUri();
+        SpotifyCurrentPlaybackDevice currentPlaybackDevice = getCurrentlyPlayingDevice();
+        if(currentPlaybackDevice.getIsPlaying()) {
+            URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENTLY_PLAYING_URI)
+                    .build().toUri();
 
-        RequestEntity<?> requestEntity = RequestEntity
-                .get(uri)
-                .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
-                .accept(MediaType.APPLICATION_JSON).build();
+            RequestEntity<?> requestEntity = RequestEntity
+                    .get(uri)
+                    .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
+                    .accept(MediaType.APPLICATION_JSON).build();
 
-        try {
-            ResponseEntity<SpotifyCurrentlyPlaying> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
-                    requestEntity, SpotifyCurrentlyPlaying.class);
-            return responseEntity.getBody();
-        } catch (HttpClientErrorException ex) {
-            log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
-            if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                spotifyTokenRefresh();
-                getCurrentSong();
-            } else {
-                ex.printStackTrace();
+            try {
+                ResponseEntity<SpotifyCurrentlyPlaying> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
+                        requestEntity, SpotifyCurrentlyPlaying.class);
+                return responseEntity.getBody();
+            } catch (HttpClientErrorException ex) {
+                log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
+                if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    spotifyTokenRefresh();
+                    getCurrentSong();
+                } else {
+                    ex.printStackTrace();
+                }
             }
-        }
 
-        return null;
+            return null;
+        } else {
+            log.error("A song is not currently playing.");
+            return null;
+        }
     }
 
     @Override
     public void playSong(String deviceId) {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PLAY_URI);
+        SpotifyCurrentPlaybackDevice currentPlaybackDevice = getCurrentlyPlayingDevice();
+        if(!currentPlaybackDevice.getIsPlaying()) {
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PLAY_URI);
 
-        if(deviceId != null) {
-            uriBuilder.queryParam("device_id", deviceId);
-        }
-
-        URI uri = uriBuilder.build().toUri();
-
-        RequestEntity<?> requestEntity = RequestEntity
-                .put(uri)
-                .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
-                .accept(MediaType.APPLICATION_JSON)
-                .body("");
-
-        try {
-            restTemplate.exchange(uri, HttpMethod.PUT, requestEntity, Object.class);
-        } catch (HttpClientErrorException ex) {
-            log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
-            if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                spotifyTokenRefresh();
-                playSong(deviceId);
-            } else {
-                ex.printStackTrace();
+            if (deviceId != null) {
+                uriBuilder.queryParam("device_id", deviceId);
             }
+
+            URI uri = uriBuilder.build().toUri();
+
+            RequestEntity<?> requestEntity = RequestEntity
+                    .put(uri)
+                    .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body("");
+
+            try {
+                restTemplate.exchange(uri, HttpMethod.PUT, requestEntity, Object.class);
+            } catch (HttpClientErrorException ex) {
+                log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
+                if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    spotifyTokenRefresh();
+                    playSong(deviceId);
+                } else {
+                    ex.printStackTrace();
+                }
+            }
+        } else {
+            log.error("The Spotify client is already playing.");
         }
     }
 
     @Override
     public void pauseSong(String deviceId) {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PAUSE_URI);
+        SpotifyCurrentPlaybackDevice currentPlaybackDevice = getCurrentlyPlayingDevice();
+        if(currentPlaybackDevice.getIsPlaying()) {
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PAUSE_URI);
 
-        if(deviceId != null) {
-            uriBuilder.queryParam("device_id", deviceId);
-        }
-
-        URI uri = uriBuilder.build().toUri();
-
-        RequestEntity<?> requestEntity = RequestEntity
-                .put(uri)
-                .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
-                .accept(MediaType.APPLICATION_JSON)
-                .body("");
-
-        try {
-            restTemplate.exchange(uri, HttpMethod.PUT, requestEntity, Object.class);
-        } catch (HttpClientErrorException ex) {
-            log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
-            if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                spotifyTokenRefresh();
-                pauseSong(deviceId);
-            } else {
-                log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
-                ex.printStackTrace();
+            if (deviceId != null) {
+                uriBuilder.queryParam("device_id", deviceId);
             }
+
+            URI uri = uriBuilder.build().toUri();
+
+            RequestEntity<?> requestEntity = RequestEntity
+                    .put(uri)
+                    .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body("");
+
+            try {
+                restTemplate.exchange(uri, HttpMethod.PUT, requestEntity, Object.class);
+            } catch (HttpClientErrorException ex) {
+                log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
+                if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    spotifyTokenRefresh();
+                    pauseSong(deviceId);
+                } else {
+                    log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
+                    ex.printStackTrace();
+                }
+            }
+        } else {
+            log.error("The Spotify client is already paused.");
         }
     }
 
