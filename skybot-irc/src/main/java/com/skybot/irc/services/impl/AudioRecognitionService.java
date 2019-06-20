@@ -164,7 +164,8 @@ public class AudioRecognitionService implements IAudioRecognitionService {
             StreamingRecognitionConfig streamingRecognitionConfig =
                     StreamingRecognitionConfig.newBuilder()
                             .setConfig(recognitionConfig)
-                            .setInterimResults(true)
+                            .setInterimResults(false)
+                            .setSingleUtterance(true)
                             .build();
 
             StreamingRecognizeRequest request =
@@ -198,7 +199,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
                     if (lastTranscriptWasFinal || estimatedTime >= STREAMING_LIMIT) {
                         targetDataLine.close();
-                        clientStream.closeSend();
+//                        clientStream.closeSend();
                         referenceToStreamController.cancel(); // remove Observer
 
                         resultEndTimeInMS = 0;

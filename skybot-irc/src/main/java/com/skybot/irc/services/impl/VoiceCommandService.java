@@ -1,11 +1,15 @@
 package com.skybot.irc.services.impl;
 
 import com.github.twitch4j.TwitchClient;
+import com.github.twitch4j.chat.TwitchChat;
 import com.github.twitch4j.common.exception.NotFoundException;
 import com.github.twitch4j.helix.domain.CreateClipList;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.UserPrincipal;
+import com.skybot.irc.models.spotify.SpotifyArtist;
+import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
+import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
 import com.skybot.irc.services.ISpotifyClientService;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -65,8 +70,10 @@ public class VoiceCommandService implements IVoiceCommandService {
                         levenshteinDistance.apply(longer.trim().toLowerCase(), shorter.trim().toLowerCase())) /
                         (double) longerLength;
                 if(similarity >= COMMAND_SIMILARITY_THRESHOLD) {
-                    viableCommands.put(commandValue, similarity);
-                    log.info("Threshold met for [{}] and [{}]: Threshold: {}", command, commandText, similarity);
+                    if(!viableCommands.containsKey(commandValue) || viableCommands.get(commandValue) < similarity) {
+                        viableCommands.put(commandValue, similarity);
+                        log.info("Threshold met for [{}] and [{}]: Threshold: {}", command, commandText, similarity);
+                    }
                 }
             }));
         }
@@ -113,6 +120,38 @@ public class VoiceCommandService implements IVoiceCommandService {
         }
     }
 
+    @Override
+    public void getCurrentlyPlayingSongAndShare() {
+        SpotifyCurrentPlaybackDevice currentPlaybackDevicePlay = spotifyClientService.getCurrentlyPlayingDevice();
+        if(currentPlaybackDevicePlay.getIsPlaying()) {
+            SpotifyCurrentlyPlaying currentlyPlaying = spotifyClientService.getCurrentSong();
+            // AlbumName - SongName by Artist, artist, and artist
+            StringBuilder twitchSongInfo = new StringBuilder();
+            twitchSongInfo.append(currentlyPlaying.getItem().getAlbum().getName() + " - ");
+            twitchSongInfo.append(currentlyPlaying.getItem().getName() + " by ");
+
+            List<SpotifyArtist> artists = currentlyPlaying.getItem().getArtists();
+            int numOfArtist = artists.size();
+            for(int artistIndex = 0; artistIndex < numOfArtist; artistIndex++) {
+                if(artistIndex < numOfArtist - 1) {
+                    twitchSongInfo.append(artists.get(artistIndex).getName() + ", ");
+                } else {
+                    if(numOfArtist > 1) {
+                        twitchSongInfo.append("and ");
+                    }
+                    twitchSongInfo.append(artists.get(artistIndex).getName());
+                }
+            }
+
+            TwitchChat twitchChat = twitchClient.getChat();
+            twitchChat.sendMessage(userPrincipal.getLogin(), twitchSongInfo.toString());
+            twitchChat.sendMessage(userPrincipal.getLogin(),
+                    currentlyPlaying.getItem().getExternalUrls().get("spotify").toString());
+        } else {
+            log.info("No song is currently playing.");
+        }
+    }
+
     private void mapCommand(VoiceCommandKeys command) {
         // For spotify: need to verify if logged in, also need to verify if endpoint was successful
         // Should that be done in SpotifyClientServiceImpl or here???...
@@ -128,7 +167,7 @@ public class VoiceCommandService implements IVoiceCommandService {
                 log.info("Ending the poll");
                 break;
             case SONG_INFO:
-                spotifyClientService.getCurrentSong();
+                getCurrentlyPlayingSongAndShare();
                 break;
             case NEXT_SONG:
                 spotifyClientService.nextSong();
@@ -137,10 +176,14 @@ public class VoiceCommandService implements IVoiceCommandService {
                 spotifyClientService.previousSong();
                 break;
             case PLAY_SONG:
-                spotifyClientService.playSong();
+                SpotifyCurrentPlaybackDevice currentPlaybackDevicePlay = spotifyClientService.getCurrentlyPlayingDevice();
+                log.info("{}", currentPlaybackDevicePlay);
+                spotifyClientService.playSong(currentPlaybackDevicePlay.getDevice().getId());
                 break;
             case PAUSE_SONG:
-                spotifyClientService.pauseSong();
+                SpotifyCurrentPlaybackDevice currentPlaybackDevice = spotifyClientService.getCurrentlyPlayingDevice();
+                log.info("{}", currentPlaybackDevice);
+                spotifyClientService.pauseSong(currentPlaybackDevice.getDevice().getId());
                 break;
             default:
                 log.info("I didn't get that.");

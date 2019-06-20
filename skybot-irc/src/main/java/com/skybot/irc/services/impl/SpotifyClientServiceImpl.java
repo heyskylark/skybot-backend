@@ -1,7 +1,8 @@
 package com.skybot.irc.services.impl;
 
 import com.skybot.irc.config.SkyBotProperties;
-import com.skybot.irc.models.spotify.SpotifyCurrentSong;
+import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
+import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
 import com.skybot.irc.models.spotify.SpotifyRefresh;
 import com.skybot.irc.models.spotify.SpotifyToken;
 import com.skybot.irc.services.ISpotifyClientService;
@@ -33,6 +34,7 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     // Deal with client making too many requests, restrict to 3 requests then inform that spotify is down/etc
 
     private static final String SPOTIFY_SERVICE_URI = "spotify-service-uri";
+    private static final String CURRENT_DEVICE = "/v1/me/player";
     private static final String CURRENTLY_PLAYING_URI = "/v1/me/player/currently-playing";
     private static final String PLAY_URI = "/v1/me/player/play";
     private static final String PAUSE_URI = "/v1/me/player/pause";
@@ -56,8 +58,8 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     }
 
     @Override
-    public SpotifyCurrentSong getCurrentSong() {
-        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENTLY_PLAYING_URI)
+    public SpotifyCurrentPlaybackDevice getCurrentlyPlayingDevice() {
+        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENT_DEVICE)
                 .build().toUri();
 
         RequestEntity<?> requestEntity = RequestEntity
@@ -66,13 +68,14 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
                 .accept(MediaType.APPLICATION_JSON).build();
 
         try {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, requestEntity, String.class);
-            log.info("Does it work: {}: {}", responseEntity.getStatusCode(), responseEntity.getBody());
+            ResponseEntity<SpotifyCurrentPlaybackDevice> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
+                    requestEntity, SpotifyCurrentPlaybackDevice.class);
+            return responseEntity.getBody();
         } catch (HttpClientErrorException ex) {
             log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
-            if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 spotifyTokenRefresh();
-                playSong();
+                getCurrentlyPlayingDevice();
             } else {
                 ex.printStackTrace();
             }
@@ -82,9 +85,41 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     }
 
     @Override
-    public void playSong() {
-        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + PLAY_URI)
+    public SpotifyCurrentlyPlaying getCurrentSong() {
+        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + CURRENTLY_PLAYING_URI)
                 .build().toUri();
+
+        RequestEntity<?> requestEntity = RequestEntity
+                .get(uri)
+                .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
+                .accept(MediaType.APPLICATION_JSON).build();
+
+        try {
+            ResponseEntity<SpotifyCurrentlyPlaying> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
+                    requestEntity, SpotifyCurrentlyPlaying.class);
+            return responseEntity.getBody();
+        } catch (HttpClientErrorException ex) {
+            log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
+            if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                spotifyTokenRefresh();
+                getCurrentSong();
+            } else {
+                ex.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public void playSong(String deviceId) {
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PLAY_URI);
+
+        if(deviceId != null) {
+            uriBuilder.queryParam("device_id", deviceId);
+        }
+
+        URI uri = uriBuilder.build().toUri();
 
         RequestEntity<?> requestEntity = RequestEntity
                 .put(uri)
@@ -98,7 +133,7 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
             log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
             if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 spotifyTokenRefresh();
-                playSong();
+                playSong(deviceId);
             } else {
                 ex.printStackTrace();
             }
@@ -106,9 +141,14 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     }
 
     @Override
-    public void pauseSong() {
-        URI uri = UriComponentsBuilder.fromUriString(spotifyServiceUri + PAUSE_URI)
-                .build().toUri();
+    public void pauseSong(String deviceId) {
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PAUSE_URI);
+
+        if(deviceId != null) {
+            uriBuilder.queryParam("device_id", deviceId);
+        }
+
+        URI uri = uriBuilder.build().toUri();
 
         RequestEntity<?> requestEntity = RequestEntity
                 .put(uri)
@@ -122,7 +162,7 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
             log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
             if(ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 spotifyTokenRefresh();
-                pauseSong();
+                pauseSong(deviceId);
             } else {
                 log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
                 ex.printStackTrace();

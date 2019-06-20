@@ -1,14 +1,17 @@
 package com.skybot.irc.services;
 
-import com.skybot.irc.models.spotify.SpotifyCurrentSong;
+import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
+import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
 
 public interface ISpotifyClientService {
 
-    SpotifyCurrentSong getCurrentSong();
+    SpotifyCurrentPlaybackDevice getCurrentlyPlayingDevice();
 
-    void playSong();
+    SpotifyCurrentlyPlaying getCurrentSong();
 
-    void pauseSong();
+    void playSong(String deviceId);
+
+    void pauseSong(String deviceId);
 
     void nextSong();
 
