@@ -19,6 +19,7 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +123,8 @@ public class VoiceCommandService implements IVoiceCommandService {
 
     @Override
     public void getCurrentlyPlayingSongAndShare() {
+        //TODO use getCurrentlyPlayingSongAndShare as a chat command also...should I move out of this service?
+        // Maybe only move related parts out, as this method also will have the bot voice respond on the client
         SpotifyCurrentlyPlaying currentlyPlaying = spotifyClientService.getCurrentSong();
         if(currentlyPlaying != null) {
             StringBuilder twitchSongInfo = new StringBuilder();
@@ -176,7 +179,7 @@ public class VoiceCommandService implements IVoiceCommandService {
                 break;
             case PLAY_SONG:
                 SpotifyCurrentPlaybackDevice currentPlaybackDevicePlay = spotifyClientService.getCurrentlyPlayingDevice();
-                spotifyClientService.playSong(currentPlaybackDevicePlay.getDevice().getId());
+                spotifyClientService.playSong(currentPlaybackDevicePlay.getDevice().getId(), null);
                 break;
             case PAUSE_SONG:
                 SpotifyCurrentPlaybackDevice currentPlaybackDevice = spotifyClientService.getCurrentlyPlayingDevice();

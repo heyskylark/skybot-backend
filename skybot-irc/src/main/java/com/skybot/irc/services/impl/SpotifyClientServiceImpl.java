@@ -1,5 +1,10 @@
 package com.skybot.irc.services.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
 import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
@@ -26,12 +31,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Service
 public class SpotifyClientServiceImpl implements ISpotifyClientService {
 
-    // Deal with client making too many requests, restrict to 3 requests then inform that spotify is down/etc
+    //TODO Deal with client making too many requests, restrict to 3 requests then inform that spotify is down/etc
+    //TODO Create player error object with error reasons
 
     private static final String SPOTIFY_SERVICE_URI = "spotify-service-uri";
     private static final String CURRENT_DEVICE = "/v1/me/player";
@@ -122,9 +129,11 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     }
 
     @Override
-    public void playSong(String deviceId) {
+    public void playSong(String deviceId, List<String> songUris) {
+        boolean songListExists = (songUris != null && !songUris.isEmpty());
         SpotifyCurrentPlaybackDevice currentPlaybackDevice = getCurrentlyPlayingDevice();
-        if(!currentPlaybackDevice.getIsPlaying()) {
+
+        if(songListExists || !currentPlaybackDevice.getIsPlaying()) {
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(spotifyServiceUri + PLAY_URI);
 
             if (deviceId != null) {
@@ -133,11 +142,19 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
 
             URI uri = uriBuilder.build().toUri();
 
+            String body = "";
+            if(songListExists) {
+                ObjectMapper mapper = new ObjectMapper();
+                ArrayNode array = mapper.valueToTree(songUris);
+                JsonNode result = mapper.createObjectNode().set("uris", array);
+                body = result.toString();
+            }
+
             RequestEntity<?> requestEntity = RequestEntity
                     .put(uri)
                     .header("Authorization", "Bearer " + spotifyToken.getAccessToken())
                     .accept(MediaType.APPLICATION_JSON)
-                    .body("");
+                    .body(body);
 
             try {
                 restTemplate.exchange(uri, HttpMethod.PUT, requestEntity, Object.class);
@@ -145,13 +162,13 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
                 log.error("Spotify error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
                 if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     spotifyTokenRefresh();
-                    playSong(deviceId);
+                    playSong(deviceId, songUris);
                 } else {
                     ex.printStackTrace();
                 }
             }
         } else {
-            log.error("The Spotify client is already playing.");
+            log.error("The Spotify client is already playing and no song list was given.");
         }
     }
 
