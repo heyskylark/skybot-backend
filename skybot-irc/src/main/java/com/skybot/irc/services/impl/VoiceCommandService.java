@@ -7,7 +7,7 @@ import com.github.twitch4j.helix.domain.CreateClipList;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.UserPrincipal;
-import com.skybot.irc.models.spotify.SpotifyArtist;
+import com.skybot.irc.models.spotify.SpotifyArtistSimplified;
 import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
 import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
 import com.skybot.irc.services.ISpotifyClientService;
@@ -19,7 +19,6 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +133,7 @@ public class VoiceCommandService implements IVoiceCommandService {
                         .append(currentlyPlaying.getItem().getName())
                         .append(" by ");
 
-                List<SpotifyArtist> artists = currentlyPlaying.getItem().getArtists();
+                List<SpotifyArtistSimplified> artists = currentlyPlaying.getItem().getArtists();
                 int numOfArtist = artists.size();
                 for (int artistIndex = 0; artistIndex < numOfArtist; artistIndex++) {
                     if (artistIndex < numOfArtist - 1) {

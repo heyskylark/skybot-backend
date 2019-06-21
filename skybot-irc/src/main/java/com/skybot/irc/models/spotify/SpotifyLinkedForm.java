@@ -7,25 +7,22 @@ import java.net.URI;
 import java.util.Map;
 
 @Data
-public class SpotifyArtist {
+public class SpotifyLinkedForm {
 
-    public SpotifyArtist() { }
+    public SpotifyLinkedForm() { }
 
     @JsonProperty(value = "external_urls")
-    private Map<String, URI> externalUrls;
+    public Map<String, URI> externalUrls;
 
     @JsonProperty
-    private URI href;
+    public URI href;
 
     @JsonProperty
-    private String id;
+    public String id;
 
     @JsonProperty
-    private String name;
+    public String type;
 
     @JsonProperty
-    private String type;
-
-    @JsonProperty
-    private String uri;
+    public String uri;
 }

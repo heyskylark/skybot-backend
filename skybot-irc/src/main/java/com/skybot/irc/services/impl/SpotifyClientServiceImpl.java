@@ -130,6 +130,7 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
 
     @Override
     public void playSong(String deviceId, List<String> songUris) {
+        // TODO play from pre-existing playlist?
         boolean songListExists = (songUris != null && !songUris.isEmpty());
         SpotifyCurrentPlaybackDevice currentPlaybackDevice = getCurrentlyPlayingDevice();
 

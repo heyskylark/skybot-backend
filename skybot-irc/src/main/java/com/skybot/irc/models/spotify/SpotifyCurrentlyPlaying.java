@@ -32,7 +32,7 @@ public class SpotifyCurrentlyPlaying {
 
     @Nullable
     @JsonProperty
-    private SpotifyItem item;
+    private SpotifyTrackFull item;
 
     @NotNull
     @JsonProperty

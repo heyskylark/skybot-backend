@@ -34,7 +34,7 @@ public class SpotifyCurrentPlaybackDevice {
 
     @Nullable
     @JsonProperty
-    private SpotifyItem item;
+    private SpotifyTrackFull item;
 
     @JsonProperty(value = "currently_playing_type")
     private String currentlyPlayingType;
