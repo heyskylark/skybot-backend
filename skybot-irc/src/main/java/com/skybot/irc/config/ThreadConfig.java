@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
 @Configuration
 public class ThreadConfig extends AsyncConfigurerSupport {
 
-    @Bean
+    @Bean(name = "mainTaskExecutor")
     public TaskExecutor taskExecutor() {
         return new SimpleAsyncTaskExecutor();
     }

@@ -4,6 +4,7 @@ import com.skybot.irc.services.HotWordService;
 import com.skybot.irc.services.IAudioRecognitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,7 @@ public class SkyBotVoice {
 
     @Autowired
     public SkyBotVoice(IAudioRecognitionService audioRecognitionService,
-                       TaskExecutor executor) {
+                       @Qualifier("mainTaskExecutor") TaskExecutor executor) {
         this.audioRecognitionService = audioRecognitionService;
         this.executor = executor;
     }

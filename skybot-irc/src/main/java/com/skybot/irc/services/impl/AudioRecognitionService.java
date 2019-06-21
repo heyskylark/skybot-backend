@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +55,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
     @Autowired
     public AudioRecognitionService(IVoiceCommandService voiceCommandService,
                                    SpeechSettings speechSettings,
-                                   TaskExecutor executor) {
+                                   @Qualifier("mainTaskExecutor") TaskExecutor executor) {
         this.voiceCommandService = voiceCommandService;
         this.speechSettings = speechSettings;
         this.executor = executor;
