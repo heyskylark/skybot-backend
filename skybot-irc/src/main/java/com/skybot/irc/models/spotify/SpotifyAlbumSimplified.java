@@ -22,7 +22,7 @@ public class SpotifyAlbumSimplified {
     public String albumType;
 
     @JsonProperty
-    public SpotifyArtistSimplified artists;
+    public List<SpotifyArtistSimplified> artists;
 
     @JsonProperty(value = "available_markets")
     public List<String> availableMarkets;

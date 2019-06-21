@@ -59,12 +59,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .antMatcher("/**")
-                .authorizeRequests()
-                .antMatchers("/login", "/webjars/**", "/error**")
-                .permitAll()
-                .anyRequest()
-                .authenticated();
+                .antMatcher("/**");
+//                .authorizeRequests()
+//                .antMatchers("/login", "/webjars/**", "/error**", "/topic**")
+//                .permitAll()
+//                .anyRequest()
+//                .authenticated();
     }
 //
 //    private Filter ssoFilter() {

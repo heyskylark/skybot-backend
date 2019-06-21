@@ -20,7 +20,7 @@ public class SpotifyTrackFull {
     public List<SpotifyArtistSimplified> artists;
 
     @JsonProperty(value = "available_markets")
-    public String availableMarkets;
+    public List<String> availableMarkets;
 
     @JsonProperty(value = "disc_number")
     public Integer diskNumber;

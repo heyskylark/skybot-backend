@@ -7,9 +7,12 @@ import com.github.twitch4j.helix.domain.CreateClipList;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.UserPrincipal;
+import com.skybot.irc.models.spotify.SpotifyAlbumSimplified;
 import com.skybot.irc.models.spotify.SpotifyArtistSimplified;
 import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
 import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;
+import com.skybot.irc.models.spotify.SpotifyImage;
+import com.skybot.irc.models.websocket.ClientMessage;
 import com.skybot.irc.services.ISpotifyClientService;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
@@ -17,6 +20,7 @@ import com.skybot.irc.utility.VoiceCommandKeys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -28,24 +32,28 @@ import java.util.Map;
 public class VoiceCommandService implements IVoiceCommandService {
 
     private static final double COMMAND_SIMILARITY_THRESHOLD = 0.64;
+    private static final String WEBSOCKET_URI = "/topic/public";
 
     private final UserPrincipal userPrincipal;
     private final ITwitchHelixService twitchHelixService;
     private final TwitchClient twitchClient;
     private final ISpotifyClientService spotifyClientService;
     private final SkyBotProperties skyBotProperties;
+    private final SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     public VoiceCommandService(ITwitchHelixService twitchHelixService,
                                TwitchClient twitchClient,
                                ISpotifyClientService spotifyClientService,
                                UserPrincipal userPrincipal,
-                               SkyBotProperties skyBotProperties) {
+                               SkyBotProperties skyBotProperties,
+                               SimpMessageSendingOperations messagingTemplate) {
         this.twitchHelixService = twitchHelixService;
         this.userPrincipal = userPrincipal;
         this.twitchClient = twitchClient;
         this.spotifyClientService = spotifyClientService;
         this.skyBotProperties = skyBotProperties;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -128,7 +136,8 @@ public class VoiceCommandService implements IVoiceCommandService {
         if(currentlyPlaying != null) {
             StringBuilder twitchSongInfo = new StringBuilder();
             if (currentlyPlaying.getItem() != null) {
-                twitchSongInfo.append(currentlyPlaying.getItem().getAlbum().getName())
+                SpotifyAlbumSimplified spotifyAlbum = currentlyPlaying.getItem().getAlbum();
+                twitchSongInfo.append(spotifyAlbum.getName())
                         .append(" - ")
                         .append(currentlyPlaying.getItem().getName())
                         .append(" by ");
@@ -150,7 +159,15 @@ public class VoiceCommandService implements IVoiceCommandService {
                 twitchChat.sendMessage(userPrincipal.getLogin(), twitchSongInfo.toString());
                 twitchChat.sendMessage(userPrincipal.getLogin(),
                         currentlyPlaying.getItem().getExternalUrls().get("spotify").toString());
+
+                // Lowest res image is too small, must get bigger one, maybe a middle size?
+                SpotifyImage image = spotifyAlbum.getImages().get(spotifyAlbum.getImages().size() - 1);
+                ClientMessage clientMessage = new ClientMessage(ClientMessage.MessageType.SPOTIFY_ALBUM,
+                        twitchSongInfo.toString(), image.getUrl(), image.getUrl());
+                messagingTemplate.convertAndSend(WEBSOCKET_URI, clientMessage);
             }
+        } else {
+            log.error("The Spotify client is not currently playing a song.");
         }
     }
 
