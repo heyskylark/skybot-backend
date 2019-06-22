@@ -9,9 +9,11 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ClientInfoController {
 
-    @MessageMapping("/client.sendMessage")
+//    @MessageMapping("/client.sendMessage")
     @SendTo("/topic/public")
     public ClientMessage clientMessage(@Payload ClientMessage clientMessage) {
         return clientMessage;
     }
+
+
 }

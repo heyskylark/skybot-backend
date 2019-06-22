@@ -11,15 +11,18 @@ import com.google.cloud.speech.v1p1beta1.StreamingRecognitionResult;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeRequest;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
+import com.skybot.irc.models.websocket.ClientMessage;
 import com.skybot.irc.services.IAudioRecognitionService;
 import com.skybot.irc.services.IVoiceCommandService;
 import com.skybot.irc.utility.TextColor;
+import com.skybot.irc.utility.WebSocketUris;
 import lombok.extern.slf4j.Slf4j;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1p1beta1.StreamingRecognizeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import javax.sound.sampled.AudioFormat;
@@ -30,6 +33,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static com.skybot.irc.models.websocket.ClientMessage.MessageType;
 
 @Slf4j
 @Service
@@ -49,14 +54,17 @@ public class AudioRecognitionService implements IAudioRecognitionService {
     private static StreamController referenceToStreamController;
 
     private final IVoiceCommandService voiceCommandService;
+    private final SimpMessageSendingOperations messagingTemplate;
     private final SpeechSettings speechSettings;
     private final TaskExecutor executor;
 
     @Autowired
     public AudioRecognitionService(IVoiceCommandService voiceCommandService,
+                                   SimpMessageSendingOperations messagingTemplate,
                                    SpeechSettings speechSettings,
                                    @Qualifier("mainTaskExecutor") TaskExecutor executor) {
         this.voiceCommandService = voiceCommandService;
+        this.messagingTemplate = messagingTemplate;
         this.speechSettings = speechSettings;
         this.executor = executor;
     }
@@ -102,6 +110,10 @@ public class AudioRecognitionService implements IAudioRecognitionService {
 
                         public void onStart(StreamController controller) {
                             referenceToStreamController = controller;
+
+                            ClientMessage clientMessage =
+                                    new ClientMessage(MessageType.START_LISTEN, null, null, null);
+                            messagingTemplate.convertAndSend(WebSocketUris.MAIN_MESSAGING_URI, clientMessage);
                         }
 
                         public void onResponse(StreamingRecognizeResponse response) {
@@ -128,6 +140,10 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                                     lastTranscriptWasFinal = true;
                                     System.out.print(TextColor.RESET);
 
+                                    ClientMessage clientMessage =
+                                            new ClientMessage(MessageType.END_LISTEN, null, null, null);
+                                    messagingTemplate.convertAndSend(WebSocketUris.MAIN_MESSAGING_URI, clientMessage);
+
                                     voiceCommandService.findCommand(alternative.getTranscript());
                                 } else {
                                     System.out.print(TextColor.RED);
@@ -141,6 +157,7 @@ public class AudioRecognitionService implements IAudioRecognitionService {
                         }
 
                         public void onComplete() {
+                            log.info("FINISHED");
                         }
 
                         public void onError(Throwable t) {

@@ -3,8 +3,6 @@ package com.skybot.irc.services.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.models.spotify.SpotifyCurrentPlaybackDevice;
 import com.skybot.irc.models.spotify.SpotifyCurrentlyPlaying;

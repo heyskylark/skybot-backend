@@ -52,6 +52,8 @@ public class SkyBot {
 
     @EventListener
     public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
+        //TODO for now I can have a list/database of approved users that can login to the server using twitch to avoid
+        // random users logging in and using the service. Can later be expanded upon with a subscription service.
         userPrincipal.setFromJson(authorizedEvent.getAuthentication().getPrincipal());
 
         // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch

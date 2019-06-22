@@ -22,16 +22,18 @@ public class ClientMessage {
 
     public enum MessageType {
         REGULAR,
+        START_LISTEN,
+        END_LISTEN,
         SPOTIFY_ALBUM
     }
 
     @NotNull
     private MessageType type;
 
-    @NotNull
+    @Nullable
     private String message;
 
-    @NotNull
+    @Nullable
     private URI voiceUri;
 
     @Nullable

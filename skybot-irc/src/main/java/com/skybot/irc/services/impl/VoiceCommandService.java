@@ -17,6 +17,7 @@ import com.skybot.irc.services.ISpotifyClientService;
 import com.skybot.irc.services.ITwitchHelixService;
 import com.skybot.irc.services.IVoiceCommandService;
 import com.skybot.irc.utility.VoiceCommandKeys;
+import com.skybot.irc.utility.WebSocketUris;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +28,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.skybot.irc.models.websocket.ClientMessage.MessageType;
+
 @Slf4j
 @Service
 public class VoiceCommandService implements IVoiceCommandService {
 
     private static final double COMMAND_SIMILARITY_THRESHOLD = 0.64;
-    private static final String WEBSOCKET_URI = "/topic/public";
 
     private final UserPrincipal userPrincipal;
     private final ITwitchHelixService twitchHelixService;
@@ -162,9 +164,9 @@ public class VoiceCommandService implements IVoiceCommandService {
 
                 // Lowest res image is too small, must get bigger one, maybe a middle size?
                 SpotifyImage image = spotifyAlbum.getImages().get(spotifyAlbum.getImages().size() - 1);
-                ClientMessage clientMessage = new ClientMessage(ClientMessage.MessageType.SPOTIFY_ALBUM,
+                ClientMessage clientMessage = new ClientMessage(MessageType.SPOTIFY_ALBUM,
                         twitchSongInfo.toString(), image.getUrl(), image.getUrl());
-                messagingTemplate.convertAndSend(WEBSOCKET_URI, clientMessage);
+                messagingTemplate.convertAndSend(WebSocketUris.MAIN_MESSAGING_URI, clientMessage);
             }
         } else {
             log.error("The Spotify client is not currently playing a song.");
