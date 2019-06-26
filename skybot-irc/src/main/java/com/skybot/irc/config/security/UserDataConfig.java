@@ -1,4 +1,4 @@
-package com.skybot.irc.config;
+package com.skybot.irc.config.security;
 
 import com.skybot.irc.models.UserPrincipal;
 import org.springframework.context.annotation.Bean;

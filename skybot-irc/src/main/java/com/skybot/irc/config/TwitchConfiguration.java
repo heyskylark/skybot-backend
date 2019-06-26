@@ -20,6 +20,7 @@ public class TwitchConfiguration {
     @Autowired
     SkyBotProperties skyBotProperties;
 
+    //TODO maybe make this session scoped and configured after a login
     @Bean
     public TwitchClient twitchClient() {
         log.info("Configuring twitch client.");

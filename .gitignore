@@ -52,4 +52,4 @@ bower_components/
 .config/
 /coverage
 .env.*
-**/resources/config/*
+skybot-irc/src/main/resources/config/*
