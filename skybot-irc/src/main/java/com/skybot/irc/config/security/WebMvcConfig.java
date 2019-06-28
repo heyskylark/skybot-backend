@@ -1,4 +1,4 @@
-package com.skybot.irc.config;
+package com.skybot.irc.config.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

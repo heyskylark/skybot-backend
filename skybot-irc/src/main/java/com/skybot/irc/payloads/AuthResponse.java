@@ -1,4 +1,4 @@
-package com.skybot.irc.models.security;
+package com.skybot.irc.payloads;
 
 import lombok.Data;
 

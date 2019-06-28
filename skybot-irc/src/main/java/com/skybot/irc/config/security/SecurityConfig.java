@@ -18,8 +18,13 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +49,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+
+    @Autowired
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
@@ -97,7 +105,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                 .and()
                 .authorizeRequests()
-                .antMatchers("/",
+                .antMatchers(
                         "/error",
                         "/favicon.ico",
                         "/**/*.png",
@@ -141,46 +149,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthorizationCodeResourceDetails spotify() {
         return new AuthorizationCodeResourceDetails();
     }
-//
-//    @Resource
-//    @Qualifier("accessTokenRequest")
-//    private AccessTokenRequest accessTokenRequest;
-//
-//    @Bean
-//    @Primary
-//    public OAuth2RestOperations oAuth2RestOperations(OAuth2ClientContext oauth2ClientContext,
-//                                                 OAuth2ProtectedResourceDetails details) {
-//        OAuth2RestTemplate template = new OAuth2RestTemplate(details,
-//                oauth2ClientContext);
-//        return template;
-//    }
-//
-//    @Bean
-//    public OAuth2ClientContextFilter oauth2ClientContextFilter() {
-//        OAuth2ClientContextFilter filter = new OAuth2ClientContextFilter();
-//        return filter;
-//    }
-//
-//    @Bean
-//    @Scope(value = "request", proxyMode = ScopedProxyMode.INTERFACES)
-//    protected AccessTokenRequest accessTokenRequest(@Value("#{request.parameterMap}")
-//                                                            Map<String, String[]> parameters, @Value("#{request.getAttribute('currentUri')}")
-//                                                            String currentUri) {
-//        DefaultAccessTokenRequest request = new DefaultAccessTokenRequest(parameters);
-//        request.setCurrentUri(currentUri);
-//        return request;
-//    }
-//
-//    @Bean
-//    @Primary
-//    public OAuth2ClientContext oauth2ClientContext(AccessTokenRequest accessTokenRequest) {
-//        return new DefaultOAuth2ClientContext(accessTokenRequest);
-//    }
-//
-//    @Bean
-//    public PrincipalExtractor twitchPrincipalExtractor() {
-//        return new TwitchPrincipalExtractor();
-//    }
 //
 //    @EventListener
 //    public void authFailedEventListener(AbstractAuthenticationFailureEvent oAuth2AuthenticationFailureEvent){
