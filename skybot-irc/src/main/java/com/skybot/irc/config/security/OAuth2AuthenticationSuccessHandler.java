@@ -4,6 +4,7 @@ import com.skybot.irc.config.SkyBotProperties;
 import com.skybot.irc.exceptions.BadRequestException;
 import com.skybot.irc.repositories.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.skybot.irc.utility.CookieUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 import static com.skybot.irc.repositories.HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME;
 
+@Slf4j
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 

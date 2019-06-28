@@ -54,11 +54,10 @@ public class SpotifyClientServiceImpl implements ISpotifyClientService {
     @Autowired
     public SpotifyClientServiceImpl(SpotifyToken spotifyToken,
                                     SkyBotProperties skyBotProperties,
-                                    RestTemplate restTemplate,
                                     @Qualifier("spotify") AuthorizationCodeResourceDetails spotify) {
         this.spotifyToken = spotifyToken;
         this.spotifyServiceUri = skyBotProperties.getApi().get(SPOTIFY_SERVICE_URI);
-        this.restTemplate = restTemplate;
+        this.restTemplate = null;
         this.spotify = spotify;
     }
 

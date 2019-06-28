@@ -8,22 +8,18 @@ import org.jetbrains.annotations.NotNull;
 public class SpotifyToken {
     public SpotifyToken() { }
 
-    @NotNull
     @JsonProperty(value = "access_token")
     private String accessToken;
 
-    @NotNull
     @JsonProperty(value = "token_type")
     private String tokenType;
 
     @JsonProperty
     private String scope;
 
-    @NotNull
     @JsonProperty(value = "expires_in")
     private Integer expiresIn;
 
-    @NotNull
     @JsonProperty(value = "refresh_token")
     private String refreshToken;
 

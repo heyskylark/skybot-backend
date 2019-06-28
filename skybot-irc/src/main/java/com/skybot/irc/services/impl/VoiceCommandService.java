@@ -114,7 +114,7 @@ public class VoiceCommandService implements IVoiceCommandService {
                     String noEditClipUrl = clip.getEditUrl().substring(0, indexOfEdit);
                     twitchClient.getChat().sendMessage(userPrincipal.getLogin(), noEditClipUrl);
 
-                    log.debug("Sent clip url [{}] to channel [{}] chat", noEditClipUrl, userPrincipal.getUserName());
+                    log.debug("Sent clip url [{}] to channel [{}] chat", noEditClipUrl, userPrincipal.getLogin());
                 });
                 // Send confirmation and voice audio through websocket to live client
             } else {

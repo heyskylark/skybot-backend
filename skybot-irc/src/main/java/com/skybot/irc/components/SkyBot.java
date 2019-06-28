@@ -50,25 +50,25 @@ public class SkyBot {
         twitchClient.getEventManager().onEvent(ChannelMessageEvent.class).subscribe(this::onChannelMessage);
     }
 
-    @EventListener
-    public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
-        //TODO for now I can have a list/database of approved users that can login to the server using twitch to avoid
-        // random users logging in and using the service. Can later be expanded upon with a subscription service.
-        userPrincipal.setFromJson(authorizedEvent.getAuthentication().getPrincipal());
-
-        // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
-        // config to get credentials then, and then apply to twitchClient...
-        // Maybe anything that uses User Token, instead of using TwitchClient use OAuthRestTemplate to make calls to twitch
-        // and then use the twitch4j models for the twitch return payload...
-
-        log.info("Successful login, logging in {}", userPrincipal.getUserName());
-
-        joinChannel(userPrincipal.getLogin());
-
-        if(skyBotProperties.isVoice()) {
-            this.voice.start();
-        }
-    }
+//    @EventListener
+//    public void authSuccessEventListener(AuthenticationSuccessEvent authorizedEvent){
+//        //TODO for now I can have a list/database of approved users that can login to the server using twitch to avoid
+//        // random users logging in and using the service. Can later be expanded upon with a subscription service.
+////        userPrincipal.setFromJson(authorizedEvent.getAuthentication().getPrincipal());
+//
+//        // Instead of having TwitchConfig configured at the load, maybe build twitchClient here? Or force login at twitch
+//        // config to get credentials then, and then apply to twitchClient...
+//        // Maybe anything that uses User Token, instead of using TwitchClient use OAuthRestTemplate to make calls to twitch
+//        // and then use the twitch4j models for the twitch return payload...
+//
+////        log.info("Successful login, logging in {}", userPrincipal.getLogin());
+////
+////        joinChannel(userPrincipal.getLogin());
+////
+////        if(skyBotProperties.isVoice()) {
+////            this.voice.start();
+////        }
+//    }
 
     private void joinChannel(String login) {
         twitchClient.getChat().joinChannel(login);

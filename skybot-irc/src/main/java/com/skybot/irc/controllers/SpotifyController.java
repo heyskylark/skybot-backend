@@ -39,9 +39,6 @@ public class SpotifyController {
     @Autowired
     private SpotifyToken spotifyToken;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
     @GetMapping("/login/spotify")
     public RedirectView loginSpotify(@RequestParam(required = false) String code,
                                      @RequestParam(required = false) String error,
@@ -75,9 +72,9 @@ public class SpotifyController {
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
             try {
-                ResponseEntity<SpotifyToken> responseEntity = restTemplate
-                        .exchange(uri, HttpMethod.POST, request, SpotifyToken.class);
-                spotifyToken.setFromSpotifyToken(responseEntity.getBody());
+//                ResponseEntity<SpotifyToken> responseEntity = restTemplate
+//                        .exchange(uri, HttpMethod.POST, request, SpotifyToken.class);
+//                spotifyToken.setFromSpotifyToken(responseEntity.getBody());
             } catch (HttpClientErrorException ex) {
                 log.error("Error: {}: {}", ex.getMessage(), ex.getResponseBodyAsString());
                 ex.printStackTrace();

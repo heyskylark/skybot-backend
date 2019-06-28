@@ -19,9 +19,11 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "skybot")
 public class SkyBotProperties {
 
-    private final Auth auth = new Auth();
+    public SkyBotProperties() {}
 
-    private final OAuth2 oauth2 = new OAuth2();
+    private Auth auth = new Auth();
+
+    private OAuth2 oauth2 = new OAuth2();
 
     private boolean debug;
 
@@ -76,5 +78,13 @@ public class SkyBotProperties {
             this.authorizedRedirectUris = authorizedRedirectUris;
             return this;
         }
+    }
+
+    public Auth getAuth() {
+        return auth;
+    }
+
+    public OAuth2 getOauth2() {
+        return oauth2;
     }
 }

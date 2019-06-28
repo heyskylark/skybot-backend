@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @Entity
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email")
+        @UniqueConstraint(columnNames = "login")
 })
 public class User {
     @Id
@@ -28,8 +28,14 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Email
     @Column(nullable = false)
+    private String login;
+
+    @Column
+    private String type;
+
+    @Email
+    @Column
     private String email;
 
     private String imageUrl;

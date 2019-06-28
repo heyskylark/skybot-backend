@@ -1,8 +1,12 @@
 package com.skybot.irc.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.List;
 
 @Data
 public class UserPrincipal {
@@ -14,7 +18,10 @@ public class UserPrincipal {
     private String login;
 
     @JsonProperty(value = "display_name")
-    private String userName;
+    private String name;
+
+    @JsonProperty
+    private String email;
 
     @JsonProperty
     private String type;
@@ -34,6 +41,12 @@ public class UserPrincipal {
     @JsonProperty(value = "view_count")
     private String viewCount;
 
+    @JsonProperty
+    List<GrantedAuthority> authorities;
+
+    @JsonIgnore
+    private String password;
+
     public UserPrincipal() { }
 
     public UserPrincipal(Object userJson) {
@@ -42,7 +55,7 @@ public class UserPrincipal {
 
         this.id = userPrincipal.getId();
         this.login = userPrincipal.getLogin();
-        this.userName = userPrincipal.getUserName();
+        this.name = userPrincipal.getName();
         this.type = userPrincipal.getType();
         this.broadcasterType = userPrincipal.getBroadcasterType();
         this.description = userPrincipal.getDescription();
@@ -57,7 +70,7 @@ public class UserPrincipal {
 
         this.id = userPrincipal.getId();
         this.login = userPrincipal.getLogin();
-        this.userName = userPrincipal.getUserName();
+        this.name = userPrincipal.getName();
         this.type = userPrincipal.getType();
         this.broadcasterType = userPrincipal.getBroadcasterType();
         this.description = userPrincipal.getDescription();

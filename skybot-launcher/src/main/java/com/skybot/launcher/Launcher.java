@@ -10,14 +10,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Slf4j
 @SpringBootApplication(
-        scanBasePackages={"com.skybot.irc"}
+        scanBasePackages={"com.skybot.irc.*"}
 )
 @EnableAutoConfiguration
 @EnableJpaRepositories(basePackages = {
         "com.skybot.irc.models",
         "com.skybot.irc.repositories"
 })
-@ComponentScan("com.skybot.irc.model")
 @EntityScan("com.skybot.irc.models")
 public class Launcher {
 

@@ -14,8 +14,18 @@ public class TwitchOAuth2UserInfo extends OAuth2UserInfo {
     }
 
     @Override
+    public String getLogin() {
+        return (String) attributes.get("login");
+    }
+
+    @Override
     public String getName() {
-        return (String) attributes.get("name");
+        return (String) attributes.get("display_name");
+    }
+
+    @Override
+    public String getUserType() {
+        return (String) attributes.get("type");
     }
 
     @Override
@@ -25,16 +35,7 @@ public class TwitchOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public String getImageUrl() {
-        if(attributes.containsKey("picture")) {
-            Map<String, Object> pictureObj = (Map<String, Object>) attributes.get("picture");
-            if(pictureObj.containsKey("data")) {
-                Map<String, Object>  dataObj = (Map<String, Object>) pictureObj.get("data");
-                if(dataObj.containsKey("url")) {
-                    return (String) dataObj.get("url");
-                }
-            }
-        }
-        return null;
+        return (String) attributes.get("profile_image_url");
     }
 
 }
