@@ -1,11 +1,7 @@
 package com.skybot.irc.config.security;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.google.api.client.json.Json;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpInputMessage;
@@ -28,7 +24,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,6 +149,7 @@ public class OAuth2AccessTokenResponseHttpMessageConverter extends AbstractHttpM
 
             String refreshToken = tokenResponseParameters.get(OAuth2ParameterNames.REFRESH_TOKEN).toString();
 
+            //TODO Fix this extra params
             Map<String, Object> additionalParameters = new LinkedHashMap<>();
 //            tokenResponseParameters.entrySet().stream()
 //                    .filter(e -> !TOKEN_RESPONSE_PARAMETER_NAMES.contains(e.getKey()))

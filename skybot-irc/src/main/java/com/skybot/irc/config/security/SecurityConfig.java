@@ -142,7 +142,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .userService(customOAuth2UserService)
                 .and()
                 .tokenEndpoint()
-                .accessTokenResponseClient(accessTokenResposeClient())
+                .accessTokenResponseClient(accessTokenResponseClient())
                 .and()
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .failureHandler(oAuth2AuthenticationFailureHandler);
@@ -151,7 +151,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
-    private OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResposeClient() {
+    private OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
         DefaultAuthorizationCodeTokenResponseClient client = new DefaultAuthorizationCodeTokenResponseClient();
         RestTemplate restTemplate = new RestTemplate(Arrays.asList(
                 new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
