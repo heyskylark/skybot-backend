@@ -149,7 +149,7 @@ public class OAuth2AccessTokenResponseHttpMessageConverter extends AbstractHttpM
 
             String refreshToken = tokenResponseParameters.get(OAuth2ParameterNames.REFRESH_TOKEN).toString();
 
-            //TODO Fix this extra params
+            //TODO Fix this extra params 
             Map<String, Object> additionalParameters = new LinkedHashMap<>();
 //            tokenResponseParameters.entrySet().stream()
 //                    .filter(e -> !TOKEN_RESPONSE_PARAMETER_NAMES.contains(e.getKey()))
